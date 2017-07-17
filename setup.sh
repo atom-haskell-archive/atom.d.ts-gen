@@ -19,7 +19,7 @@ npm install && \
 npm install --only=dev && \
 grunt setup && \
 echo "OK!"
-grunt
+grunt --force
 npm run gen
 tsc --noImplicitAny --module commonjs atom.d.ts
 
