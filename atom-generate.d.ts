@@ -269,7 +269,7 @@ declare module AtomTypes {
          * @param {Function} The callback {Function} that receives a single argument which contains the standard error output from the command. The callback is called as data is received but it's buffered to ensure only complete lines are passed until the source stream closes. After the source stream has closed all remaining data is sent in a final call (optional).
          * @param {Function} The callback {Function} which receives a single argument containing the exit status (optional).
          */
-        constructor(options: Object, command: string, args: any[], options: Object, stdout: Function, stderr: Function, exit: Function);
+        constructor(options: { command: string, args: any[], options: { stdout: (stderr: (exit: Function) => void) => void } });
     }
 
     /**
@@ -293,7 +293,7 @@ declare module AtomTypes {
          * @param {number} {Number}
          * @param {boolean} {Boolean} (optional) Whether the command will automatically start when this BufferedProcess is created. Defaults to true.  When set to false you must call the `start` method to start the process.
          */
-        constructor(options: Object, command: string, args: any[], options: Object, stdout: Function, data: string, stderr: Function, data: string, exit: Function, code: number, autoStart: boolean);
+        constructor(options: { command: string, args: any[], options: { stdout: (data: string, stderr: (data: string, exit: (code: number, autoStart: boolean) => void) => void) => void } });
         /**
          * Will call your callback when an error will be raised by the process.
          * Usually this is due to the command not being available or not on the PATH.
@@ -305,7 +305,7 @@ declare module AtomTypes {
          * @param {Function} {Function} call this to indicate you have handled the error. The error will not be thrown if this function is called.
          * @returns {Disposable} Returns a {Disposable}
          */
-        onWillThrowError(callback: Function, errorObject: Object, error: Object, handle: Function): Disposable;
+        onWillThrowError(callback: (errorObject: { error: { handle: Function } }) => void): Disposable;
         /**
          * Terminate the process.
          */
@@ -868,7 +868,7 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} with the following keys on which you can call
         `.dispose()` to unsubscribe.
          */
-        observe(keyPath: string, options?: Object, callback: Function): Disposable;
+        observe(keyPath: string, options?: { callback: Function }): Disposable;
         /**
          * Add a listener for changes to a given key path. If `keyPath` is
          * not specified, your callback will be called on changes to any key.
@@ -878,7 +878,7 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} with the following keys on which you can call
         `.dispose()` to unsubscribe.
          */
-        onDidChange(keyPath?: string, options?: Object, callback: Function): Disposable;
+        onDidChange(keyPath?: string, options?: { callback: Function }): Disposable;
         /**
          * Retrieves the setting for the given key.
          * 
@@ -1695,13 +1695,13 @@ declare module AtomTypes {
          * @param {Range} The new {Range} to use
          * @param {Object} {Object} properties to associate with the marker.
          */
-        setBufferRange(bufferRange: Range, properties?: Object): void;
+        setBufferRange(bufferRange: IRange, properties?: Object): void;
         /**
          * Modifies the screen range of this marker.
          * @param {Range} The new {Range} to use
          * @param {Object} An {Object} with the following keys:
          */
-        setScreenRange(screenRange: Range, options?: Object): void;
+        setScreenRange(screenRange: IRange, options?: Object): void;
         /**
          * Retrieves the buffer position of the marker's head.
          * @returns {Point} Returns a {Point}.
@@ -1711,7 +1711,7 @@ declare module AtomTypes {
          * Sets the buffer position of the marker's head.
          * @param {Point} The new {Point} to use 
          */
-        setHeadBufferPosition(bufferPosition: Point): void;
+        setHeadBufferPosition(bufferPosition: IPoint): void;
         /**
          * Retrieves the screen position of the marker's head.
          * @param {Object} An {Object} with the following keys:
@@ -1723,7 +1723,7 @@ declare module AtomTypes {
          * @param {Point} The new {Point} to use
          * @param {Object} An {Object} with the following keys:
          */
-        setHeadScreenPosition(screenPosition: Point, options?: Object): void;
+        setHeadScreenPosition(screenPosition: IPoint, options?: Object): void;
         /**
          * Retrieves the buffer position of the marker's tail.
          * @returns {Point} Returns a {Point}.
@@ -1733,7 +1733,7 @@ declare module AtomTypes {
          * Sets the buffer position of the marker's tail.
          * @param {Point} The new {Point} to use 
          */
-        setTailBufferPosition(bufferPosition: Point): void;
+        setTailBufferPosition(bufferPosition: IPoint): void;
         /**
          * Retrieves the screen position of the marker's tail.
          * @param {Object} An {Object} with the following keys:
@@ -1745,7 +1745,7 @@ declare module AtomTypes {
          * @param {Point} The new {Point} to use
          * @param {Object} An {Object} with the following keys:
          */
-        setTailScreenPosition(screenPosition: Point, options?: Object): void;
+        setTailScreenPosition(screenPosition: IPoint, options?: Object): void;
         /**
          * Retrieves the buffer position of the marker's start. This will always be
          * less than or equal to the result of {DisplayMarker::getEndBufferPosition}.
@@ -1849,7 +1849,7 @@ declare module AtomTypes {
          * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
          * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markScreenRange(range: Range, options: any): DisplayMarker;
+        markScreenRange(range: IRange, options: any): DisplayMarker;
         /**
          * Create a marker on this layer with its head at the given screen
          * position and no tail.
@@ -1857,14 +1857,14 @@ declare module AtomTypes {
          * @param {Object} An {Object} with the following keys:
          * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markScreenPosition(screenPosition: Point, options?: Object): DisplayMarker;
+        markScreenPosition(screenPosition: IPoint, options?: Object): DisplayMarker;
         /**
          * Create a marker with the given buffer range.
          * @param {Range} A {Range} or range-compatible {Array}
          * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
          * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markBufferRange(range: Range, options: any): DisplayMarker;
+        markBufferRange(range: IRange, options: any): DisplayMarker;
         /**
          * Create a marker on this layer with its head at the given buffer
          * position and no tail.
@@ -1872,7 +1872,7 @@ declare module AtomTypes {
          * @param {Object} An {Object} with the following keys:
          * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markBufferPosition(bufferPosition: Point, options?: Object): DisplayMarker;
+        markBufferPosition(bufferPosition: IPoint, options?: Object): DisplayMarker;
         /**
          * Get an existing marker by its id.
          * @returns {DisplayMarker} Returns a {DisplayMarker}.
@@ -1970,7 +1970,7 @@ declare module AtomTypes {
          * @param  An item that is present in {::getPaneItems} at the time of subscription or that is added at some later time.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observePaneItems(callback: Function, item: any): Disposable;
+        observePaneItems(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback when the active pane item changes.
          * 
@@ -1982,7 +1982,7 @@ declare module AtomTypes {
          * @param  The active pane item.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidChangeActivePaneItem(callback: Function, item: any): Disposable;
+        onDidChangeActivePaneItem(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback when the active pane item stops
          * changing.
@@ -1996,7 +1996,7 @@ declare module AtomTypes {
          * @param  The active pane item.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidStopChangingActivePaneItem(callback: Function, item: any): Disposable;
+        onDidStopChangingActivePaneItem(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback with the current active pane item and
          * with all future active pane items in the dock.
@@ -2004,7 +2004,7 @@ declare module AtomTypes {
          * @param  The current active pane item.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observeActivePaneItem(callback: Function, item: any): Disposable;
+        observeActivePaneItem(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback when a pane is added to the dock.
          * @param {Function} {Function} to be called panes are added.
@@ -2012,7 +2012,7 @@ declare module AtomTypes {
          * @param  The added pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidAddPane(callback: Function, event: Object, pane: any): Disposable;
+        onDidAddPane(callback: (event: { pane: any }) => void): Disposable;
         /**
          * Invoke the given callback before a pane is destroyed in the
          * dock.
@@ -2021,7 +2021,7 @@ declare module AtomTypes {
          * @param  The pane to be destroyed.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onWillDestroyPane(callback: Function, event: Object, pane: any): Disposable;
+        onWillDestroyPane(callback: (event: { pane: any }) => void): Disposable;
         /**
          * Invoke the given callback when a pane is destroyed in the dock.
          * @param {Function} {Function} to be called panes are destroyed.
@@ -2029,7 +2029,7 @@ declare module AtomTypes {
          * @param  The destroyed pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidDestroyPane(callback: Function, event: Object, pane: any): Disposable;
+        onDidDestroyPane(callback: (event: { pane: any }) => void): Disposable;
         /**
          * Invoke the given callback with all current and future panes in the
          * dock.
@@ -2037,14 +2037,14 @@ declare module AtomTypes {
          * @param {Pane} A {Pane} that is present in {::getPanes} at the time of subscription or that is added at some later time.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observePanes(callback: Function, pane: Pane): Disposable;
+        observePanes(callback: (pane: Pane) => void): Disposable;
         /**
          * Invoke the given callback when the active pane changes.
          * @param {Function} {Function} to be called when the active pane changes.
          * @param {Pane} A {Pane} that is the current return value of {::getActivePane}.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidChangeActivePane(callback: Function, pane: Pane): Disposable;
+        onDidChangeActivePane(callback: (pane: Pane) => void): Disposable;
         /**
          * Invoke the given callback with the current active pane and when
          * the active pane changes.
@@ -2052,7 +2052,7 @@ declare module AtomTypes {
          * @param {Pane} A {Pane} that is the current return value of {::getActivePane}.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observeActivePane(callback: Function, pane: Pane): Disposable;
+        observeActivePane(callback: (pane: Pane) => void): Disposable;
         /**
          * Invoke the given callback when a pane item is added to the dock.
          * @param {Function} {Function} to be called when pane items are added.
@@ -2062,7 +2062,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the added item in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidAddPaneItem(callback: Function, event: Object, item: any, pane: Pane, index: number): Disposable;
+        onDidAddPaneItem(callback: (event: { item: any, pane: Pane, index: number }) => void): Disposable;
         /**
          * Invoke the given callback when a pane item is about to be
          * destroyed, before the user is prompted to save it.
@@ -2073,7 +2073,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the item to be destroyed in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose` can be called to unsubscribe.
          */
-        onWillDestroyPaneItem(callback: Function, event: Object, item: any, pane: Pane, index: number): Disposable;
+        onWillDestroyPaneItem(callback: (event: { item: any, pane: Pane, index: number }) => void): Disposable;
         /**
          * Invoke the given callback when a pane item is destroyed.
          * @param {Function} {Function} to be called when pane items are destroyed.
@@ -2083,7 +2083,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the destroyed item in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose` can be called to unsubscribe.
          */
-        onDidDestroyPaneItem(callback: Function, event: Object, item: any, pane: Pane, index: number): Disposable;
+        onDidDestroyPaneItem(callback: (event: { item: any, pane: Pane, index: number }) => void): Disposable;
         /**
          * Get all pane items in the dock.
          * @returns {any[]} Returns an {Array} of items.
@@ -2896,7 +2896,7 @@ declare module AtomTypes {
          * @param {Object} An {Object} whose top-level keys point at sub-objects mapping keystroke patterns to commands.
          * @param {number} A {Number} used to sort keybindings which have the same specificity. Defaults to `0`. 
          */
-        add(source: string, bindings: Object, priority: number): void;
+        add(source: string, bindings: { priority: number }): void;
         /**
          * Get all current key bindings.
          * @returns {any[]} Returns an {Array} of {KeyBinding}s.
@@ -3057,14 +3057,14 @@ declare module AtomTypes {
          * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
          * @returns {Marker} Returns a {Marker}.
          */
-        markRange(range: Range, options: any): Marker;
+        markRange(range: IRange, options: any): Marker;
         /**
          * Create a marker at with its head at the given position with no tail.
          * @param {Point} {Point} or point-compatible {Array}
          * @param {Object} An {Object} with the following keys:
          * @returns {Marker} Returns a {Marker}.
          */
-        markPosition(position: Point, options?: Object): Marker;
+        markPosition(position: IPoint, options?: Object): Marker;
         /**
          * Subscribe to be notified asynchronously whenever markers are
          * created, updated, or destroyed on this layer. *Prefer this method for
@@ -3790,14 +3790,14 @@ declare module AtomTypes {
          * @param {boolean} {Boolean} true when the panel has been shown
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidChangeVisible(callback: Function, visible: boolean): Disposable;
+        onDidChangeVisible(callback: (visible: boolean) => void): Disposable;
         /**
          * Invoke the given callback when the pane is destroyed.
          * @param {Function} {Function} to be called when the pane is destroyed.
          * @param {Panel} {Panel} this panel
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidDestroy(callback: Function, panel: Panel): Disposable;
+        onDidDestroy(callback: (panel: Panel) => void): Disposable;
         /**
          * @returns  Returns the panel's item.
          */
@@ -3850,13 +3850,13 @@ declare module AtomTypes {
          * @param  An optional boolean indicating whether to force the copying of objects that are already points.
          * @returns {Point} Returns: A {Point} based on the given object.
          */
-        static fromObject(object: Point, copy: any): Point;
+        static fromObject(object: IPoint, copy: any): Point;
         /**
          * @param {Point} {Point}
          * @param {Point} {Point} 
          * @returns {Point} Returns the given {Point} that is earlier in the buffer.
          */
-        static min(point1: Point, point2: Point): Point;
+        static min(point1: IPoint, point2: IPoint): Point;
 
         /**
          * Construct a {Point} object
@@ -3883,7 +3883,7 @@ declare module AtomTypes {
          * @param {Point} A {Point} whose row and column will be added to this point's row and column to build the returned point.
          * @returns {Point} Returns a {Point}.
          */
-        translate(other: Point): Point;
+        translate(other: IPoint): Point;
         /**
          * Build and return a new {Point} by traversing the rows and columns
          * specified by the given point.
@@ -3896,44 +3896,44 @@ declare module AtomTypes {
          * @param {Point} A {Point} providing the rows and columns to traverse by.
          * @returns {Point} Returns a {Point}.
          */
-        traverse(other: Point): Point;
+        traverse(other: IPoint): Point;
         /**
          * @param {Point} A {Point} or point-compatible {Array}.
          * @returns  Returns `-1` if this point precedes the argument.
          * @returns  Returns `0` if this point is equivalent to the argument.
          * @returns  Returns `1` if this point follows the argument.
          */
-        compare(other: Point): any;
+        compare(other: IPoint): any;
         /**
          * @param {Point} A {Point} or point-compatible {Array}. 
          * @returns {boolean} Returns a {Boolean} indicating whether this point has the same row
         and column as the given {Point} or point-compatible {Array}.
          */
-        isEqual(other: Point): boolean;
+        isEqual(other: IPoint): boolean;
         /**
          * @param {Point} A {Point} or point-compatible {Array}. 
          * @returns {boolean} Returns a {Boolean} indicating whether this point precedes the given
         {Point} or point-compatible {Array}.
          */
-        isLessThan(other: Point): boolean;
+        isLessThan(other: IPoint): boolean;
         /**
          * @param {Point} A {Point} or point-compatible {Array}. 
          * @returns {boolean} Returns a {Boolean} indicating whether this point precedes or is
         equal to the given {Point} or point-compatible {Array}.
          */
-        isLessThanOrEqual(other: Point): boolean;
+        isLessThanOrEqual(other: IPoint): boolean;
         /**
          * @param {Point} A {Point} or point-compatible {Array}. 
          * @returns {boolean} Returns a {Boolean} indicating whether this point follows the given
         {Point} or point-compatible {Array}.
          */
-        isGreaterThan(other: Point): boolean;
+        isGreaterThan(other: IPoint): boolean;
         /**
          * @param {Point} A {Point} or point-compatible {Array}. 
          * @returns {boolean} Returns a {Boolean} indicating whether this point follows or is
         equal to the given {Point} or point-compatible {Array}.
          */
-        isGreaterThanOrEqual(other: Point): boolean;
+        isGreaterThanOrEqual(other: IPoint): boolean;
         /**
          * @returns  Returns an array of this point's row and column.
          */
@@ -4072,7 +4072,7 @@ declare module AtomTypes {
          * @param  An optional boolean indicating whether to force the copying of objects that are already ranges.˚
          * @returns {Range} Returns: A {Range} based on the given object.
          */
-        static fromObject(object: Range, copy: any): Range;
+        static fromObject(object: IRange, copy: any): Range;
         /**
          * Call this with the result of {Range::serialize} to construct a new Range.
          * @param {any[]} {Array} of params to pass to the {::constructor} 
@@ -4084,7 +4084,7 @@ declare module AtomTypes {
          * @param {Point} {Point} or Point compatible {Array} (default: [0,0])
          * @param {Point} {Point} or Point compatible {Array} (default: [0,0]) 
          */
-        constructor(pointA: Point, pointB: Point);
+        constructor(pointA: IPoint, pointB: IPoint);
         /**
          * @returns  Returns a new range with the same start and end positions.
          */
@@ -4126,7 +4126,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} or range-compatible {Array} 
          * @returns  Returns a new range that contains this range and the given range.
          */
-        union(otherRange: Range): any;
+        union(otherRange: IRange): any;
         /**
          * Build and return a new range by translating this range's start and
          * end points by the given delta(s).
@@ -4134,7 +4134,7 @@ declare module AtomTypes {
          * @param {Point} A {Point} to by which to translate the end of this range. If omitted, the `startDelta` will be used instead.
          * @returns {Range} Returns a {Range}.
          */
-        translate(startDelta: Point, endDelta?: Point): Range;
+        translate(startDelta: IPoint, endDelta?: IPoint): Range;
         /**
          * Build and return a new range by traversing this range's start and
          * end points by the given delta.
@@ -4143,7 +4143,7 @@ declare module AtomTypes {
          * @param {Point} A {Point} containing the rows and columns to traverse to derive the new range.
          * @returns {Range} Returns a {Range}.
          */
-        traverse(delta: Point): Range;
+        traverse(delta: IPoint): Range;
         /**
          * Compare two Ranges
          * @param {Range} A {Range} or range-compatible {Array}.
@@ -4151,40 +4151,40 @@ declare module AtomTypes {
          * @returns  Returns `0` if this range is equivalent to the argument.
          * @returns  Returns `1` if this range starts after the argument or is contained by it.
          */
-        compare(otherRange: Range): any;
+        compare(otherRange: IRange): any;
         /**
          * @param {Range} A {Range} or range-compatible {Array}. 
          * @returns {boolean} Returns a {Boolean} indicating whether this range has the same start
         and end points as the given {Range} or range-compatible {Array}.
          */
-        isEqual(otherRange: Range): boolean;
+        isEqual(otherRange: IRange): boolean;
         /**
          * @param {Range} A {Range} or range-compatible {Array}. 
          * @returns {boolean} Returns a {Boolean} indicating whether this range starts and ends on
         the same row as the argument.
          */
-        coversSameRows(otherRange: Range): boolean;
+        coversSameRows(otherRange: IRange): boolean;
         /**
          * Determines whether this range intersects with the argument.
          * @param {Range} A {Range} or range-compatible {Array}
          * @param {boolean} {Boolean} indicating whether to exclude endpoints   when testing for intersection. Defaults to `false`.
          * @returns {boolean} Returns a {Boolean}.
          */
-        intersectsWith(otherRange: Range, exclusive?: boolean): boolean;
+        intersectsWith(otherRange: IRange, exclusive?: boolean): boolean;
         /**
          * @param {Range} A {Range} or range-compatible {Array}
          * @param  A boolean value including that the containment should be exclusive of endpoints. Defaults to false. 
          * @returns {boolean} Returns a {Boolean} indicating whether this range contains the given
         range.
          */
-        containsRange(otherRange: Range, exclusive: any): boolean;
+        containsRange(otherRange: IRange, exclusive: any): boolean;
         /**
          * @param {Point} A {Point} or point-compatible {Array}
          * @param  A boolean value including that the containment should be exclusive of endpoints. Defaults to false. 
          * @returns {boolean} Returns a {Boolean} indicating whether this range contains the given
         point.
          */
-        containsPoint(point: Point, exclusive: any): boolean;
+        containsPoint(point: IPoint, exclusive: any): boolean;
         /**
          * @param {number} Row {Number} 
          * @returns {boolean} Returns a {Boolean} indicating whether this range intersects the
@@ -4266,7 +4266,7 @@ declare module AtomTypes {
          * @param {Range} The new {Range} to use.
          * @param {Object} {Object} options matching those found in {::setBufferRange}. 
          */
-        setScreenRange(screenRange: Range, options?: Object): void;
+        setScreenRange(screenRange: IRange, options?: Object): void;
         /**
          * @returns {Range} Returns the buffer {Range} for the selection.
          */
@@ -4276,7 +4276,7 @@ declare module AtomTypes {
          * @param {Range} The new {Range} to select.
          * @param {Object} {Object} with the keys:
          */
-        setBufferRange(bufferRange: Range, options?: Object): void;
+        setBufferRange(bufferRange: IRange, options?: Object): void;
         /**
          * @returns  Returns the starting and ending buffer rows the selection is
         highlighting.
@@ -4307,7 +4307,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} to check against.
          * @returns {boolean} Returns a {Boolean}
          */
-        intersectsBufferRange(bufferRange: Range): boolean;
+        intersectsBufferRange(bufferRange: IRange): boolean;
         /**
          * Identifies if a selection intersects with another selection.
          * @param {Selection} A {Selection} to check against.
@@ -4324,13 +4324,13 @@ declare module AtomTypes {
          * position.
          * @param {Point} An instance of {Point}, with a given `row` and `column`. 
          */
-        selectToScreenPosition(position: Point): void;
+        selectToScreenPosition(position: IPoint): void;
         /**
          * Selects the text from the current cursor position to a given buffer
          * position.
          * @param {Point} An instance of {Point}, with a given `row` and `column`. 
          */
-        selectToBufferPosition(position: Point): void;
+        selectToBufferPosition(position: IPoint): void;
         /**
          * Selects the text one position right of the cursor.
          * @param {number} {Number} number of columns to select (default: 1) 
@@ -4613,7 +4613,7 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to cancel the
         subscription.
          */
-        observeStyleElements(callback: Function, styleElement: any, sourcePath: string, context: string): Disposable;
+        observeStyleElements(callback: (styleElement: any, sourcePath: string, context: string) => void): Disposable;
         /**
          * Invoke `callback` when a style element is added.
          * @param {Function} {Function} that is called with style elements.
@@ -4623,7 +4623,7 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to cancel the
         subscription.
          */
-        onDidAddStyleElement(callback: Function, styleElement: any, sourcePath: string, context: string): Disposable;
+        onDidAddStyleElement(callback: (styleElement: any, sourcePath: string, context: string) => void): Disposable;
         /**
          * Invoke `callback` when a style element is removed.
          * @param {Function} {Function} that is called with style elements.
@@ -4631,7 +4631,7 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to cancel the
         subscription.
          */
-        onDidRemoveStyleElement(callback: Function, styleElement: any): Disposable;
+        onDidRemoveStyleElement(callback: (styleElement: any) => void): Disposable;
         /**
          * Invoke `callback` when an existing style element is updated.
          * @param {Function} {Function} that is called with style elements.
@@ -4641,7 +4641,7 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to cancel the
         subscription.
          */
-        onDidUpdateStyleElement(callback: Function, styleElement: any, sourcePath: string, context: string): Disposable;
+        onDidUpdateStyleElement(callback: (styleElement: any, sourcePath: string, context: string) => void): Disposable;
         /**
          * Get all loaded style elements.
          */
@@ -4998,7 +4998,7 @@ declare module AtomTypes {
          * @param {Range} A {Range}
          * @returns {string} Returns a {String}
          */
-        getTextInRange(range: Range): string;
+        getTextInRange(range: IRange): string;
         /**
          * Get the text of all lines in the buffer, without their line endings.
          * @returns {any[]} Returns an {Array} of {String}s.
@@ -5068,7 +5068,7 @@ declare module AtomTypes {
          * @param {Object} {Object}
          * @returns {Range} Returns the {Range} of the inserted text.
          */
-        setTextInRange(range: Range, text: string, options?: Object): Range;
+        setTextInRange(range: IRange, text: string, options?: Object): Range;
         /**
          * Insert text at the given position.
          * @param {Point} A {Point} representing the insertion location. The position is clipped before insertion.
@@ -5076,7 +5076,7 @@ declare module AtomTypes {
          * @param {Object} {Object}
          * @returns {Range} Returns the {Range} of the inserted text.
          */
-        insert(position: Point, text: string, options?: Object): Range;
+        insert(position: IPoint, text: string, options?: Object): Range;
         /**
          * Append text to the end of the buffer.
          * @param {string} A {String} representing the text text to append.
@@ -5089,7 +5089,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} in which to delete. The range is clipped before deleting.
          * @returns {Range} Returns an empty {Range} starting at the start of deleted range.
          */
-        delete(range: Range): Range;
+        delete(range: IRange): Range;
         /**
          * Delete the line associated with a specified row.
          * @param {number} A {Number} representing the 0-indexed row to delete.
@@ -5136,7 +5136,7 @@ declare module AtomTypes {
          * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
          * @returns {Marker} Returns a {Marker}.
          */
-        markRange(range: Range, properties: any): Marker;
+        markRange(range: IRange, properties: any): Marker;
         /**
          * Create a marker at the given position with no tail in the default
          * marker layer.
@@ -5144,7 +5144,7 @@ declare module AtomTypes {
          * @param {Object} An {Object} with the following keys:
          * @returns {Marker} Returns a {Marker}.
          */
-        markPosition(position: Point, options?: Object): Marker;
+        markPosition(position: IPoint, options?: Object): Marker;
         /**
          * Get all existing markers on the default marker layer.
          * @returns {any[]} Returns an {Array} of {Marker}s.
@@ -5249,7 +5249,7 @@ declare module AtomTypes {
          * @param {Object} {Object}
          * @param {Function} A {Function} that's called on each match with an {Object} containing the following keys:
          */
-        scan(regex: RegExp, options?: Object, iterator: Function): void;
+        scan(regex: RegExp, options?: { iterator: Function }): void;
         /**
          * Scan regular expression matches in the entire buffer in reverse
          * order, calling the given iterator function on each match.
@@ -5257,7 +5257,7 @@ declare module AtomTypes {
          * @param {Object} {Object}
          * @param {Function} A {Function} that's called on each match with an {Object} containing the following keys:
          */
-        backwardsScan(regex: RegExp, options?: Object, iterator: Function): void;
+        backwardsScan(regex: RegExp, options?: { iterator: Function }): void;
         /**
          * Scan regular expression matches in a given range , calling the given
          * iterator function on each match.
@@ -5266,7 +5266,7 @@ declare module AtomTypes {
          * @param {Object} {Object}
          * @param {Function} A {Function} that's called on each match with an {Object} containing the following keys:
          */
-        scanInRange(regex: RegExp, range: Range, options?: Object, callback: Function): void;
+        scanInRange(regex: RegExp, range: IRange, options?: { callback: Function }): void;
         /**
          * Scan regular expression matches in a given range in reverse order,
          * calling the given iterator function on each match.
@@ -5275,7 +5275,7 @@ declare module AtomTypes {
          * @param {Object} {Object}
          * @param {Function} A {Function} that's called on each match with an {Object} containing the following keys:
          */
-        backwardsScanInRange(regex: RegExp, range: Range, options?: Object, iterator: Function): void;
+        backwardsScanInRange(regex: RegExp, range: IRange, options?: { iterator: Function }): void;
         /**
          * Replace all regular expression matches in the entire buffer.
          * @param {RegExp} A {RegExp} representing the matches to be replaced.
@@ -5329,7 +5329,7 @@ declare module AtomTypes {
          * @param {Point} A {Point}.
          * @returns {number} Returns a {Number}.
          */
-        characterIndexForPosition(position: Point): number;
+        characterIndexForPosition(position: IPoint): number;
         /**
          * Convert an absolute character offset, inclusive of newlines, to a
          * position in the buffer in row/column coordinates.
@@ -5348,7 +5348,7 @@ declare module AtomTypes {
          * @returns {Range} Returns the given {Range} if it is already in bounds, or a new clipped
         {Range} if the given range is out-of-bounds.
          */
-        clipRange(range: Range): Range;
+        clipRange(range: IRange): Range;
         /**
          * Clip the given point so it is at a valid position in the buffer.
          * 
@@ -5358,7 +5358,7 @@ declare module AtomTypes {
          * @returns {Point} Returns a new {Point} if the given position is invalid, otherwise returns
         the given position.
          */
-        clipPosition(position: Point): Point;
+        clipPosition(position: IPoint): Point;
         /**
          * Save the buffer.
          * @returns {Promise<any>} Returns a {Promise} that resolves when the save has completed.
@@ -5696,7 +5696,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} or range-compatible {Array}.
          * @returns {string} Returns a {String}.
          */
-        getTextInBufferRange(range: Range): string;
+        getTextInBufferRange(range: IRange): string;
         /**
          * @returns {number} Returns a {Number} representing the number of lines in the buffer.
          */
@@ -5746,7 +5746,7 @@ declare module AtomTypes {
          * @param {Object} {Object}
          * @returns {Range} Returns the {Range} of the newly-inserted text.
          */
-        setTextInBufferRange(range: Range, text: string, options?: Object): Range;
+        setTextInBufferRange(range: IRange, text: string, options?: Object): Range;
         /**
          * For each selection, replace the selected text with the given text.
          * @param {string} A {String} representing the text to insert.
@@ -5923,7 +5923,7 @@ declare module AtomTypes {
          * @param  An options hash for {::clipScreenPosition}.
          * @returns {Point} Returns a {Point}.
          */
-        screenPositionForBufferPosition(bufferPosition: Point, options?: any): Point;
+        screenPositionForBufferPosition(bufferPosition: IPoint, options?: any): Point;
         /**
          * Convert a position in screen-coordinates to buffer-coordinates.
          * 
@@ -5932,19 +5932,19 @@ declare module AtomTypes {
          * @param  An options hash for {::clipScreenPosition}.
          * @returns {Point} Returns a {Point}.
          */
-        bufferPositionForScreenPosition(bufferPosition: Point, options?: any): Point;
+        bufferPositionForScreenPosition(bufferPosition: IPoint, options?: any): Point;
         /**
          * Convert a range in buffer-coordinates to screen-coordinates.
          * @param {Range} {Range} in buffer coordinates to translate into screen coordinates.
          * @returns {Range} Returns a {Range}.
          */
-        screenRangeForBufferRange(bufferRange: Range): Range;
+        screenRangeForBufferRange(bufferRange: IRange): Range;
         /**
          * Convert a range in screen-coordinates to buffer-coordinates.
          * @param {Range} {Range} in screen coordinates to translate into buffer coordinates.
          * @returns {Range} Returns a {Range}.
          */
-        bufferRangeForScreenRange(screenRange: Range): Range;
+        bufferRangeForScreenRange(screenRange: IRange): Range;
         /**
          * Clip the given {Point} to a valid position in the buffer.
          * 
@@ -5955,14 +5955,14 @@ declare module AtomTypes {
          * @param {Point} The {Point} representing the position to clip.
          * @returns {Point} Returns a {Point}.
          */
-        clipBufferPosition(bufferPosition: Point): Point;
+        clipBufferPosition(bufferPosition: IPoint): Point;
         /**
          * Clip the start and end of the given range to valid positions in the
          * buffer. See {::clipBufferPosition} for more information.
          * @param {Range} The {Range} to clip.
          * @returns {Range} Returns a {Range}.
          */
-        clipBufferRange(range: Range): Range;
+        clipBufferRange(range: IRange): Range;
         /**
          * Clip the given {Point} to a valid position on screen.
          * 
@@ -5974,7 +5974,7 @@ declare module AtomTypes {
          * @param {Object} {Object}
          * @returns {Point} Returns a {Point}.
          */
-        clipScreenPosition(screenPosition: Point, options?: Object): Point;
+        clipScreenPosition(screenPosition: IPoint, options?: Object): Point;
         /**
          * Clip the start and end of the given range to valid positions on screen.
          * See {::clipScreenPosition} for more information.
@@ -5982,7 +5982,7 @@ declare module AtomTypes {
          * @param  See {::clipScreenPosition} `options`.
          * @returns {Range} Returns a {Range}.
          */
-        clipScreenRange(range: Range, options?: any): Range;
+        clipScreenRange(range: IRange, options?: any): Range;
         /**
          * Add a decoration that tracks a {DisplayMarker}. When the
          * marker moves, is invalidated, or is destroyed, the decoration will be
@@ -6064,7 +6064,7 @@ declare module AtomTypes {
          * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
          * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markBufferRange(range: Range, properties: any): DisplayMarker;
+        markBufferRange(range: IRange, properties: any): DisplayMarker;
         /**
          * Create a marker on the default marker layer with the given range
          * in screen coordinates. This marker will maintain its logical location as the
@@ -6074,7 +6074,7 @@ declare module AtomTypes {
          * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
          * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markScreenRange(range: Range, properties: any): DisplayMarker;
+        markScreenRange(range: IRange, properties: any): DisplayMarker;
         /**
          * Create a marker on the default marker layer with the given buffer
          * position and no tail. To group multiple markers together in their own
@@ -6083,7 +6083,7 @@ declare module AtomTypes {
          * @param {Object} An {Object} with the following keys:
          * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markBufferPosition(bufferPosition: Point, options?: Object): DisplayMarker;
+        markBufferPosition(bufferPosition: IPoint, options?: Object): DisplayMarker;
         /**
          * Create a marker on the default marker layer with the given screen
          * position and no tail. To group multiple markers together in their own
@@ -6092,7 +6092,7 @@ declare module AtomTypes {
          * @param {Object} An {Object} with the following keys:
          * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markScreenPosition(screenPosition: Point, options?: Object): DisplayMarker;
+        markScreenPosition(screenPosition: IPoint, options?: Object): DisplayMarker;
         /**
          * Find all {DisplayMarker}s on the default marker layer that
          * match the given properties.
@@ -6160,13 +6160,13 @@ declare module AtomTypes {
          * @param {Point} A {Point} or {Array} of `[row, column]`
          * @param {Object} An {Object} containing the following keys:
          */
-        setCursorBufferPosition(position: Point, options?: Object): void;
+        setCursorBufferPosition(position: IPoint, options?: Object): void;
         /**
          * Get a {Cursor} at given screen coordinates {Point}
          * @param {Point} A {Point} or {Array} of `[row, column]`
          * @returns {Cursor} Returns the first matched {Cursor} or
          */
-        getCursorAtScreenPosition(position: Point): Cursor;
+        getCursorAtScreenPosition(position: IPoint): Cursor;
         /**
          * Get the position of the most recently added cursor in screen
          * coordinates.
@@ -6185,19 +6185,19 @@ declare module AtomTypes {
          * @param {Point} A {Point} or {Array} of `[row, column]`
          * @param {Object} An {Object} combining options for {::clipScreenPosition} with:
          */
-        setCursorScreenPosition(position: Point, options?: Object): void;
+        setCursorScreenPosition(position: IPoint, options?: Object): void;
         /**
          * Add a cursor at the given position in buffer coordinates.
          * @param {Point} A {Point} or {Array} of `[row, column]`
          * @returns {Cursor} Returns a {Cursor}.
          */
-        addCursorAtBufferPosition(bufferPosition: Point): Cursor;
+        addCursorAtBufferPosition(bufferPosition: IPoint): Cursor;
         /**
          * Add a cursor at the position in screen coordinates.
          * @param {Point} A {Point} or {Array} of `[row, column]`
          * @returns {Cursor} Returns a {Cursor}.
          */
-        addCursorAtScreenPosition(screenPosition: Point): Cursor;
+        addCursorAtScreenPosition(screenPosition: IPoint): Cursor;
         /**
          * @returns {boolean} Returns {Boolean} indicating whether or not there are multiple cursors.
          */
@@ -6333,7 +6333,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} or range-compatible {Array}.
          * @param {Object} An options {Object}:
          */
-        setSelectedBufferRange(bufferRange: Range, options?: Object): void;
+        setSelectedBufferRange(bufferRange: IRange, options?: Object): void;
         /**
          * Set the selected ranges in buffer coordinates. If there are multiple
          * selections, they are replaced by new selections with the given ranges.
@@ -6360,7 +6360,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} or range-compatible {Array}.
          * @param {Object} An options {Object}:
          */
-        setSelectedScreenRange(screenRange: Range, options?: Object): void;
+        setSelectedScreenRange(screenRange: IRange, options?: Object): void;
         /**
          * Set the selected ranges in screen coordinates. If there are multiple
          * selections, they are replaced by new selections with the given ranges.
@@ -6374,13 +6374,13 @@ declare module AtomTypes {
          * @param {Object} An options {Object}:
          * @returns {Selection} Returns the added {Selection}.
          */
-        addSelectionForBufferRange(bufferRange: Range, options?: Object): Selection;
+        addSelectionForBufferRange(bufferRange: IRange, options?: Object): Selection;
         /**
          * Add a selection for the given range in screen coordinates.
          * @param {Range} A {Range}
          * @param {Object} An options {Object}:
          */
-        addSelectionForScreenRange(screenRange: Range, options?: Object): void;
+        addSelectionForScreenRange(screenRange: IRange, options?: Object): void;
         /**
          * Select from the current cursor position to the given position in
          * buffer coordinates.
@@ -6388,7 +6388,7 @@ declare module AtomTypes {
          * This method may merge selections that end up intesecting.
          * @param {Point} An instance of {Point}, with a given `row` and `column`. 
          */
-        selectToBufferPosition(position: Point): void;
+        selectToBufferPosition(position: IPoint): void;
         /**
          * Select from the current cursor position to the given position in
          * screen coordinates.
@@ -6396,7 +6396,7 @@ declare module AtomTypes {
          * This method may merge selections that end up intesecting.
          * @param {Point} An instance of {Point}, with a given `row` and `column`. 
          */
-        selectToScreenPosition(position: Point): void;
+        selectToScreenPosition(position: IPoint): void;
         /**
          * Move the cursor of each selection one character upward while
          * preserving the selection's tail position.
@@ -6573,7 +6573,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} or range-compatible {Array}.
          * @returns {boolean} Returns a {Boolean}.
          */
-        selectionIntersectsBufferRange(bufferRange: Range): boolean;
+        selectionIntersectsBufferRange(bufferRange: IRange): boolean;
         /**
          * Scan regular expression matches in the entire buffer, calling the
          * given iterator function on each match.
@@ -6586,7 +6586,7 @@ declare module AtomTypes {
          * @param {Object} {Object}
          * @param {Function} A {Function} that's called on each match
          */
-        scan(regex: RegExp, options?: Object, iterator: Function): void;
+        scan(regex: RegExp, options?: { iterator: Function }): void;
         /**
          * Scan regular expression matches in a given range, calling the given
          * iterator function on each match.
@@ -6594,7 +6594,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} in which to search.
          * @param {Function} A {Function} that's called on each match with an {Object} containing the following keys:
          */
-        scanInBufferRange(regex: RegExp, range: Range, iterator: Function): void;
+        scanInBufferRange(regex: RegExp, range: IRange, iterator: Function): void;
         /**
          * Scan regular expression matches in a given range in reverse order,
          * calling the given iterator function on each match.
@@ -6602,7 +6602,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} in which to search.
          * @param {Function} A {Function} that's called on each match with an {Object} containing the following keys:
          */
-        backwardsScanInBufferRange(regex: RegExp, range: Range, iterator: Function): void;
+        backwardsScanInBufferRange(regex: RegExp, range: IRange, iterator: Function): void;
         /**
          * @returns {boolean} Returns a {Boolean} indicating whether softTabs are enabled for this
         editor.
@@ -6740,7 +6740,7 @@ declare module AtomTypes {
          * @param {Point} A {Point} or {Array} of [row, column].
          * @returns {ScopeDescriptor} Returns a {ScopeDescriptor}.
          */
-        scopeDescriptorForBufferPosition(bufferPosition: Point): ScopeDescriptor;
+        scopeDescriptorForBufferPosition(bufferPosition: IPoint): ScopeDescriptor;
         /**
          * Get the range in buffer coordinates of all tokens surrounding the
          * cursor that match the given scope selector.
@@ -6893,13 +6893,13 @@ declare module AtomTypes {
          * @param {Object} An object that represents a buffer position. It can be either an {Object} (`{row, column}`), {Array} (`[row, column]`), or {Point}
          * @param {Object} {Object}
          */
-        scrollToBufferPosition(bufferPosition: Object, options?: Object): void;
+        scrollToBufferPosition(bufferPosition: { options?: Object }): void;
         /**
          * Scrolls the editor to the given screen position.
          * @param {Object} An object that represents a screen position. It can be either  an {Object} (`{row, column}`), {Array} (`[row, column]`), or {Point}
          * @param {Object} {Object}
          */
-        scrollToScreenPosition(screenPosition: Object, options?: Object): void;
+        scrollToScreenPosition(screenPosition: { options?: Object }): void;
         /**
          * Retrieves the greyed out placeholder of a mini editor.
          * @returns {string} Returns a {String}.
@@ -7006,7 +7006,7 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to remove the
         added provider.
          */
-        addViewProvider(modelConstructor?: Function, createView: Function): Disposable;
+        addViewProvider(modelConstructor?: (createView: Function) => void): Disposable;
         /**
          * Get the view associated with an object in the workspace.
          * 
@@ -7065,7 +7065,7 @@ declare module AtomTypes {
          * @param {TextEditor} An {TextEditor} that is present in {::getTextEditors} at the time of subscription or that is added at some later time.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observeTextEditors(callback: Function, editor: TextEditor): Disposable;
+        observeTextEditors(callback: (editor: TextEditor) => void): Disposable;
         /**
          * Invoke the given callback with all current and future panes items
          * in the workspace.
@@ -7073,7 +7073,7 @@ declare module AtomTypes {
          * @param  An item that is present in {::getPaneItems} at the time of subscription or that is added at some later time.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observePaneItems(callback: Function, item: any): Disposable;
+        observePaneItems(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback when the active pane item changes.
          * 
@@ -7085,7 +7085,7 @@ declare module AtomTypes {
          * @param  The active pane item.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidChangeActivePaneItem(callback: Function, item: any): Disposable;
+        onDidChangeActivePaneItem(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback when the active pane item stops
          * changing.
@@ -7099,7 +7099,7 @@ declare module AtomTypes {
          * @param  The active pane item.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidStopChangingActivePaneItem(callback: Function, item: any): Disposable;
+        onDidStopChangingActivePaneItem(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback when a text editor becomes the active
          * text editor and when there is no longer an active text editor.
@@ -7107,7 +7107,7 @@ declare module AtomTypes {
          * @param {TextEditor} The active {TextEditor} or undefined if there is no longer an active text editor.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidChangeActiveTextEditor(callback: Function, editor: TextEditor): Disposable;
+        onDidChangeActiveTextEditor(callback: (editor: TextEditor) => void): Disposable;
         /**
          * Invoke the given callback with the current active pane item and
          * with all future active pane items in the workspace.
@@ -7115,7 +7115,7 @@ declare module AtomTypes {
          * @param  The current active pane item.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observeActivePaneItem(callback: Function, item: any): Disposable;
+        observeActivePaneItem(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback with the current active text editor
          * (if any), with all future active text editors, and when there is no longer
@@ -7124,7 +7124,7 @@ declare module AtomTypes {
          * @param {TextEditor} The active {TextEditor} or undefined if there is not an active text editor.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observeActiveTextEditor(callback: Function, editor: TextEditor): Disposable;
+        observeActiveTextEditor(callback: (editor: TextEditor) => void): Disposable;
         /**
          * Invoke the given callback whenever an item is opened. Unlike
          * {::onDidAddPaneItem}, observers will be notified for items that are already
@@ -7137,7 +7137,7 @@ declare module AtomTypes {
          * @param  The index of the opened item on its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidOpen(callback: Function, event: Object, uri: string, item: any, pane: any, index: any): Disposable;
+        onDidOpen(callback: (event: { uri: string, item: any, pane: any, index: any }) => void): Disposable;
         /**
          * Invoke the given callback when a pane is added to the workspace.
          * @param {Function} {Function} to be called panes are added.
@@ -7145,7 +7145,7 @@ declare module AtomTypes {
          * @param  The added pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidAddPane(callback: Function, event: Object, pane: any): Disposable;
+        onDidAddPane(callback: (event: { pane: any }) => void): Disposable;
         /**
          * Invoke the given callback before a pane is destroyed in the
          * workspace.
@@ -7154,7 +7154,7 @@ declare module AtomTypes {
          * @param  The pane to be destroyed.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onWillDestroyPane(callback: Function, event: Object, pane: any): Disposable;
+        onWillDestroyPane(callback: (event: { pane: any }) => void): Disposable;
         /**
          * Invoke the given callback when a pane is destroyed in the
          * workspace.
@@ -7163,7 +7163,7 @@ declare module AtomTypes {
          * @param  The destroyed pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidDestroyPane(callback: Function, event: Object, pane: any): Disposable;
+        onDidDestroyPane(callback: (event: { pane: any }) => void): Disposable;
         /**
          * Invoke the given callback with all current and future panes in the
          * workspace.
@@ -7171,14 +7171,14 @@ declare module AtomTypes {
          * @param {Pane} A {Pane} that is present in {::getPanes} at the time of subscription or that is added at some later time.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observePanes(callback: Function, pane: Pane): Disposable;
+        observePanes(callback: (pane: Pane) => void): Disposable;
         /**
          * Invoke the given callback when the active pane changes.
          * @param {Function} {Function} to be called when the active pane changes.
          * @param {Pane} A {Pane} that is the current return value of {::getActivePane}.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidChangeActivePane(callback: Function, pane: Pane): Disposable;
+        onDidChangeActivePane(callback: (pane: Pane) => void): Disposable;
         /**
          * Invoke the given callback with the current active pane and when
          * the active pane changes.
@@ -7186,7 +7186,7 @@ declare module AtomTypes {
          * @param {Pane} A {Pane} that is the current return value of {::getActivePane}.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observeActivePane(callback: Function, pane: Pane): Disposable;
+        observeActivePane(callback: (pane: Pane) => void): Disposable;
         /**
          * Invoke the given callback when a pane item is added to the
          * workspace.
@@ -7197,7 +7197,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the added item in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidAddPaneItem(callback: Function, event: Object, item: any, pane: Pane, index: number): Disposable;
+        onDidAddPaneItem(callback: (event: { item: any, pane: Pane, index: number }) => void): Disposable;
         /**
          * Invoke the given callback when a pane item is about to be
          * destroyed, before the user is prompted to save it.
@@ -7208,7 +7208,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the item to be destroyed in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose` can be called to unsubscribe.
          */
-        onWillDestroyPaneItem(callback: Function, event: Object, item: any, pane: Pane, index: number): Disposable;
+        onWillDestroyPaneItem(callback: (event: { item: any, pane: Pane, index: number }) => void): Disposable;
         /**
          * Invoke the given callback when a pane item is destroyed.
          * @param {Function} {Function} to be called when pane items are destroyed.
@@ -7218,7 +7218,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the destroyed item in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose` can be called to unsubscribe.
          */
-        onDidDestroyPaneItem(callback: Function, event: Object, item: any, pane: Pane, index: number): Disposable;
+        onDidDestroyPaneItem(callback: (event: { item: any, pane: Pane, index: number }) => void): Disposable;
         /**
          * Invoke the given callback when a text editor is added to the
          * workspace.
@@ -7229,7 +7229,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the added text editor in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidAddTextEditor(callback: Function, event: Object, textEditor: TextEditor, pane: Pane, index: number): Disposable;
+        onDidAddTextEditor(callback: (event: { textEditor: TextEditor, pane: Pane, index: number }) => void): Disposable;
         /**
          * Opens the given URI in Atom asynchronously.
          * If the URI is already open, the existing item for that URI will be
@@ -7247,7 +7247,7 @@ declare module AtomTypes {
          * @param {string} A {String} containing the name of the location in which this item should be opened (one of "left", "right", "bottom", or "center"). If omitted, Atom will fall back to the last location in which a user has placed an item with the same URI or, if this is a new URI, the default location specified by the item. NOTE: This option should almost always be omitted to honor user preference.
          * @returns {Promise<any>} Returns a {Promise} that resolves to the {TextEditor} for the file URI.
          */
-        open(uri?: string, options?: Object, initialLine: number, initialColumn: number, split: any, activatePane: boolean, activateItem: boolean, pending: boolean, searchAllPanes: boolean, location?: string): Promise<any>;
+        open(uri?: string, options?: { initialLine: number, initialColumn: number, split: any, activatePane: boolean, activateItem: boolean, pending: boolean, searchAllPanes: boolean, location?: string }): Promise<any>;
         /**
          * Search the workspace for items matching the given URI and hide them.
          * @param {string} The item to hide or a {String} containing the URI of the item to hide.
@@ -7407,7 +7407,7 @@ declare module AtomTypes {
          * @param {number} {Number} Determines stacking order. Lower priority items are forced closer to the edges of the window. (default: 100)
          * @returns {Panel} Returns a {Panel}
          */
-        addBottomPanel(options: Object, item: any, visible?: boolean, priority?: number): Panel;
+        addBottomPanel(options: { item: any, visible?: boolean, priority?: number }): Panel;
         /**
          * Get an {Array} of all the panel items to the left of the editor window.
          */
@@ -7420,7 +7420,7 @@ declare module AtomTypes {
          * @param {number} {Number} Determines stacking order. Lower priority items are forced closer to the edges of the window. (default: 100)
          * @returns {Panel} Returns a {Panel}
          */
-        addLeftPanel(options: Object, item: any, visible?: boolean, priority?: number): Panel;
+        addLeftPanel(options: { item: any, visible?: boolean, priority?: number }): Panel;
         /**
          * Get an {Array} of all the panel items to the right of the editor window.
          */
@@ -7433,7 +7433,7 @@ declare module AtomTypes {
          * @param {number} {Number} Determines stacking order. Lower priority items are forced closer to the edges of the window. (default: 100)
          * @returns {Panel} Returns a {Panel}
          */
-        addRightPanel(options: Object, item: any, visible?: boolean, priority?: number): Panel;
+        addRightPanel(options: { item: any, visible?: boolean, priority?: number }): Panel;
         /**
          * Get an {Array} of all the panel items at the top of the editor window.
          */
@@ -7446,7 +7446,7 @@ declare module AtomTypes {
          * @param {number} {Number} Determines stacking order. Lower priority items are forced closer to the edges of the window. (default: 100)
          * @returns {Panel} Returns a {Panel}
          */
-        addTopPanel(options: Object, item: any, visible?: boolean, priority?: number): Panel;
+        addTopPanel(options: { item: any, visible?: boolean, priority?: number }): Panel;
         /**
          * Get an {Array} of all the panel items in the header.
          */
@@ -7459,7 +7459,7 @@ declare module AtomTypes {
          * @param {number} {Number} Determines stacking order. Lower priority items are forced closer to the edges of the window. (default: 100)
          * @returns {Panel} Returns a {Panel}
          */
-        addHeaderPanel(options: Object, item: any, visible?: boolean, priority?: number): Panel;
+        addHeaderPanel(options: { item: any, visible?: boolean, priority?: number }): Panel;
         /**
          * Get an {Array} of all the panel items in the footer.
          */
@@ -7472,7 +7472,7 @@ declare module AtomTypes {
          * @param {number} {Number} Determines stacking order. Lower priority items are forced closer to the edges of the window. (default: 100)
          * @returns {Panel} Returns a {Panel}
          */
-        addFooterPanel(options: Object, item: any, visible?: boolean, priority?: number): Panel;
+        addFooterPanel(options: { item: any, visible?: boolean, priority?: number }): Panel;
         /**
          * Get an {Array} of all the modal panel items
          */
@@ -7485,7 +7485,7 @@ declare module AtomTypes {
          * @param {number} {Number} Determines stacking order. Lower priority items are forced closer to the edges of the window. (default: 100)
          * @returns {Panel} Returns a {Panel}
          */
-        addModalPanel(options: Object, item: any, visible?: boolean, priority?: number): Panel;
+        addModalPanel(options: { item: any, visible?: boolean, priority?: number }): Panel;
         /**
          * @param  Item the panel contains
          * @returns {Panel} Returns the {Panel} associated with the given item.
@@ -7505,7 +7505,7 @@ declare module AtomTypes {
          * @returns {Promise<any>} Returns a {Promise} with a `cancel()` method that will cancel all
         of the underlying searches that were started as part of this scan.
          */
-        scan(regex: RegExp, options?: Object, paths: any[], onPathsSearched?: Function, leadingContextLineCount: number, trailingContextLineCount: number, iterator: Function): Promise<any>;
+        scan(regex: RegExp, options?: { paths: any[], onPathsSearched?: (leadingContextLineCount: number, trailingContextLineCount: number, iterator: Function) => void }): Promise<any>;
         /**
          * Performs a replace across all the specified files in the project.
          * @param {RegExp} A {RegExp} to search with.
@@ -7515,7 +7515,7 @@ declare module AtomTypes {
          * @param {Object} {Object} with keys `filePath` and `replacements`.
          * @returns {Promise<any>} Returns a {Promise}.
          */
-        replace(regex: RegExp, replacementText: string, filePaths: any[], iterator: Function, options: Object): Promise<any>;
+        replace(regex: RegExp, replacementText: string, filePaths: any[], iterator: (options: Object) => void): Promise<any>;
     }
 
     /**
@@ -7531,7 +7531,7 @@ declare module AtomTypes {
          * @param {TextEditor} An {TextEditor} that is present in {::getTextEditors} at the time of subscription or that is added at some later time.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observeTextEditors(callback: Function, editor: TextEditor): Disposable;
+        observeTextEditors(callback: (editor: TextEditor) => void): Disposable;
         /**
          * Invoke the given callback with all current and future panes items
          * in the workspace center.
@@ -7539,7 +7539,7 @@ declare module AtomTypes {
          * @param  An item that is present in {::getPaneItems} at the time of subscription or that is added at some later time.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observePaneItems(callback: Function, item: any): Disposable;
+        observePaneItems(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback when the active pane item changes.
          * 
@@ -7551,7 +7551,7 @@ declare module AtomTypes {
          * @param  The active pane item.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidChangeActivePaneItem(callback: Function, item: any): Disposable;
+        onDidChangeActivePaneItem(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback when the active pane item stops
          * changing.
@@ -7565,7 +7565,7 @@ declare module AtomTypes {
          * @param  The active pane item.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidStopChangingActivePaneItem(callback: Function, item: any): Disposable;
+        onDidStopChangingActivePaneItem(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback with the current active pane item and
          * with all future active pane items in the workspace center.
@@ -7573,7 +7573,7 @@ declare module AtomTypes {
          * @param  The current active pane item.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observeActivePaneItem(callback: Function, item: any): Disposable;
+        observeActivePaneItem(callback: (item: any) => void): Disposable;
         /**
          * Invoke the given callback when a pane is added to the workspace
          * center.
@@ -7582,7 +7582,7 @@ declare module AtomTypes {
          * @param  The added pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidAddPane(callback: Function, event: Object, pane: any): Disposable;
+        onDidAddPane(callback: (event: { pane: any }) => void): Disposable;
         /**
          * Invoke the given callback before a pane is destroyed in the
          * workspace center.
@@ -7591,7 +7591,7 @@ declare module AtomTypes {
          * @param  The pane to be destroyed.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onWillDestroyPane(callback: Function, event: Object, pane: any): Disposable;
+        onWillDestroyPane(callback: (event: { pane: any }) => void): Disposable;
         /**
          * Invoke the given callback when a pane is destroyed in the
          * workspace center.
@@ -7600,7 +7600,7 @@ declare module AtomTypes {
          * @param  The destroyed pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidDestroyPane(callback: Function, event: Object, pane: any): Disposable;
+        onDidDestroyPane(callback: (event: { pane: any }) => void): Disposable;
         /**
          * Invoke the given callback with all current and future panes in the
          * workspace center.
@@ -7608,14 +7608,14 @@ declare module AtomTypes {
          * @param {Pane} A {Pane} that is present in {::getPanes} at the time of subscription or that is added at some later time.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observePanes(callback: Function, pane: Pane): Disposable;
+        observePanes(callback: (pane: Pane) => void): Disposable;
         /**
          * Invoke the given callback when the active pane changes.
          * @param {Function} {Function} to be called when the active pane changes.
          * @param {Pane} A {Pane} that is the current return value of {::getActivePane}.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidChangeActivePane(callback: Function, pane: Pane): Disposable;
+        onDidChangeActivePane(callback: (pane: Pane) => void): Disposable;
         /**
          * Invoke the given callback with the current active pane and when
          * the active pane changes.
@@ -7623,7 +7623,7 @@ declare module AtomTypes {
          * @param {Pane} A {Pane} that is the current return value of {::getActivePane}.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        observeActivePane(callback: Function, pane: Pane): Disposable;
+        observeActivePane(callback: (pane: Pane) => void): Disposable;
         /**
          * Invoke the given callback when a pane item is added to the
          * workspace center.
@@ -7634,7 +7634,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the added item in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidAddPaneItem(callback: Function, event: Object, item: any, pane: Pane, index: number): Disposable;
+        onDidAddPaneItem(callback: (event: { item: any, pane: Pane, index: number }) => void): Disposable;
         /**
          * Invoke the given callback when a pane item is about to be
          * destroyed, before the user is prompted to save it.
@@ -7645,7 +7645,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the item to be destroyed in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose` can be called to unsubscribe.
          */
-        onWillDestroyPaneItem(callback: Function, event: Object, item: any, pane: Pane, index: number): Disposable;
+        onWillDestroyPaneItem(callback: (event: { item: any, pane: Pane, index: number }) => void): Disposable;
         /**
          * Invoke the given callback when a pane item is destroyed.
          * @param {Function} {Function} to be called when pane items are destroyed.
@@ -7655,7 +7655,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the destroyed item in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose` can be called to unsubscribe.
          */
-        onDidDestroyPaneItem(callback: Function, event: Object, item: any, pane: Pane, index: number): Disposable;
+        onDidDestroyPaneItem(callback: (event: { item: any, pane: Pane, index: number }) => void): Disposable;
         /**
          * Invoke the given callback when a text editor is added to the
          * workspace center.
@@ -7666,7 +7666,7 @@ declare module AtomTypes {
          * @param {number} {Number} indicating the index of the added text editor in its pane.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        onDidAddTextEditor(callback: Function, event: Object, textEditor: TextEditor, pane: Pane, index: number): Disposable;
+        onDidAddTextEditor(callback: (event: { textEditor: TextEditor, pane: Pane, index: number }) => void): Disposable;
         /**
          * Get all pane items in the workspace center.
          * @returns {any[]} Returns an {Array} of items.

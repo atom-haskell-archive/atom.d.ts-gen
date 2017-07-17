@@ -110,12 +110,29 @@ class Emitter {
 
         this.def += `\t${modifier} ${method.name}(`;
         if (method.arguments) {
-            method.arguments.forEach((arg, idx, array) => {
-                this.def += `${arg.name}${arg.isOptional ? "?" : ""}: ${this.toTSType(arg.type) }`;
-                if (idx < array.length - 1) {
-                    this.def += ", ";
-                }
-            });
+            const printArguments = (args) => {
+              const res = ""
+              args.forEach((arg, idx, array) => {
+                  res += `${arg.name}${arg.isOptional ? "?" : ""}: ${this.toTSType(arg.type, true) }`;
+                  if (idx < array.length - 1) {
+                      res += ", ";
+                  }
+              });
+              return res
+            }
+            const args = []
+            for (const i = method.arguments.length - 1; i>=0; i--) {
+              const arg = method.arguments[i]
+              if (arg.type === 'Function' && args.length > 0) {
+                arg.type = "(" + printArguments(args) + ") => void"
+                args = []
+              } else if (arg.type === 'Object' && args.length > 0) {
+                arg.type = "{" + printArguments(args) + "}"
+                args = []
+              }
+              args.unshift(arg)
+            }
+            this.def += printArguments(args)
         }
         if (method.name === "constructor") {
             this.def += ");\n";
@@ -144,7 +161,7 @@ class Emitter {
         return result.join(" | ");
     }
 
-    toTSType(typeName:string):string {
+    toTSType(typeName:string, isArg:boolean = false):string {
         if (!typeName) {
             return "any";
         } else if (typeName === "Array") {
@@ -161,6 +178,11 @@ class Emitter {
             return "boolean";
         } else if (typeName === "Bool") {
             return "boolean";
+        }
+
+        if (isArg) {
+          if (typeName === 'Point') { return "IPoint" }
+          else if (typeName === 'Range') { return "IRange" }
         }
 
         return typeName;
