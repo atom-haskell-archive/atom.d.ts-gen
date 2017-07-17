@@ -1,8 +1,10 @@
 /// <reference path="./atom-generate.d.ts" />
 
 declare module AtomTypes {
-    // https://github.com/atom/atom/issues/4940
-    class Package {}
+  type Marker = any;
+  type TextEditorRegistry = any;
+  type ReadStream = any;
+  type WriteStream = any;
 }
 
 declare module "atom" {
@@ -10,7 +12,7 @@ declare module "atom" {
 }
 
 interface Window {
-    atom: AtomTypes.Atom;
+    atom: AtomTypes.AtomEnvironment;
     measure(description:string, fn:Function):any; // return fn result
     profile(description:string, fn:Function):any; // return fn result
 }

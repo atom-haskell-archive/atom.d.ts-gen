@@ -4,10 +4,10 @@ declare module AtomTypes {
      * 
      * An instance of this class is always available as the `atom` global. 
      *
-     * file: src/atom.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/atom.coffee#L23
+     * file: src/atom-environment.coffee
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/atom-environment.coffee#L60
      */
-    class Atom { 
+    class AtomEnvironment { 
         /**
          * A {CommandRegistry} instance 
          */
@@ -37,6 +37,10 @@ declare module AtomTypes {
          */
         tooltips: TooltipManager;
         /**
+         * A {NotificationManager} instance 
+         */
+        notifications: NotificationManager;
+        /**
          * A {Project} instance 
          */
         project: Project;
@@ -44,6 +48,10 @@ declare module AtomTypes {
          * A {GrammarRegistry} instance 
          */
         grammars: GrammarRegistry;
+        /**
+         * A {HistoryManager} instance 
+         */
+        history: HistoryManager;
         /**
          * A {PackageManager} instance 
          */
@@ -68,6 +76,10 @@ declare module AtomTypes {
          * A {Workspace} instance 
          */
         workspace: Workspace;
+        /**
+         * A {TextEditorRegistry} instance 
+         */
+        textEditors: TextEditorRegistry;
 
         /**
          * Invoke the given callback whenever {::beep} is called.
@@ -89,26 +101,26 @@ declare module AtomTypes {
          */
         onDidThrowError(callback: Function): Disposable;
         /**
-         * Is the current window in development mode? 
+         * @returns {boolean} Returns a {Boolean} that is `true` if the current window is in development mode.
          */
-        inDevMode(): void;
+        inDevMode(): boolean;
         /**
-         * Is the current window in safe mode? 
+         * @returns {boolean} Returns a {Boolean} that is `true` if the current window is in safe mode.
          */
-        inSafeMode(): void;
+        inSafeMode(): boolean;
         /**
-         * Is the current window running specs? 
+         * @returns {boolean} Returns a {Boolean} that is `true` if the current window is running specs.
          */
-        inSpecMode(): void;
+        inSpecMode(): boolean;
         /**
          * Get the version of the Atom application.
          * @returns {string} Returns the version text {String}.
          */
         getVersion(): string;
         /**
-         * Determine whether the current version is an official release. 
+         * @returns {boolean} Returns a {Boolean} that is `true` if the current version is an official release.
          */
-        isReleasedVersion(): void;
+        isReleasedVersion(): boolean;
         /**
          * Get the time taken to completely load the current window.
          * 
@@ -119,13 +131,18 @@ declare module AtomTypes {
          */
         getWindowLoadTime(): number;
         /**
+         * Get the load settings for the current window.
+         * @returns {Object} Returns an {Object} containing all the load setting key/value pairs.
+         */
+        getLoadSettings(): Object;
+        /**
          * Open a new Atom window using the given options.
          * 
          * Calling this method without an options parameter will open a prompt to pick
          * a file/folder to open in the new window.
          * @param {Object} An {Object} with the following keys:
          */
-        open(options: Object): void;
+        open(params: Object): void;
         /**
          * Prompt the user to select one or more folders.
          * @param {Function} A {Function} to call once the user has confirmed the selection.
@@ -158,6 +175,10 @@ declare module AtomTypes {
          */
         setPosition(x: number, y: number): void;
         /**
+         * Get the current window 
+         */
+        getCurrentWindow(): void;
+        /**
          * Move current window to the center of the screen. 
          */
         center(): void;
@@ -178,13 +199,17 @@ declare module AtomTypes {
          */
         reload(): void;
         /**
-         * @returns {boolean} Returns a {Boolean} true when the current window is maximized.
+         * Relaunch the entire application. 
          */
-        isMaximixed(): boolean;
+        restartApplication(): void;
         /**
-         * Is the current window in full screen mode? 
+         * @returns {boolean} Returns a {Boolean} that is `true` if the current window is maximized.
          */
-        isFullScreen(): void;
+        isMaximized(): boolean;
+        /**
+         * @returns {boolean} Returns a {Boolean} that is `true` if the current window is in full screen mode.
+         */
+        isFullScreen(): boolean;
         /**
          * Set the full screen state of the current window. 
          */
@@ -204,13 +229,16 @@ declare module AtomTypes {
          */
         confirm(options: Object): number;
         /**
-         * Open the dev tools for the current window. 
+         * Open the dev tools for the current window.
+         * @returns {Promise<any>} Returns a {Promise} that resolves when the DevTools have been opened.
          */
-        openDevTools(): void;
+        openDevTools(): Promise<any>;
         /**
-         * Toggle the visibility of the dev tools for the current window. 
+         * Toggle the visibility of the dev tools for the current window.
+         * @returns {Promise<any>} Returns a {Promise} that resolves when the DevTools have been opened or
+        closed.
          */
-        toggleDevTools(): void;
+        toggleDevTools(): Promise<any>;
         /**
          * Execute code in dev tools. 
          */
@@ -223,41 +251,60 @@ declare module AtomTypes {
      * 
      * This is necessary on Windows since it doesn't support shebang `#!` lines.
      *
-     * file: src/buffered-node-process.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/buffered-node-process.coffee#L15
+     * file: src/buffered-node-process.js
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/buffered-node-process.js#L15
      */
     class BufferedNodeProcess extends BufferedProcess { 
         /**
          * Runs the given Node script by spawning a new child process.
          * @param {Object} An {Object} with the following keys:
+         * @param {string} The {String} path to the JavaScript script to execute.
+         * @param {any[]} The {Array} of arguments to pass to the script (optional).
+         * @param {Object} The options {Object} to pass to Node's `ChildProcess.spawn` method (optional).
+         * @param {Function} The callback {Function} that receives a single argument which contains the standard output from the command. The callback is called as data is received but it's buffered to ensure only complete lines are passed until the source stream closes. After the source stream has closed all remaining data is sent in a final call (optional).
+         * @param {Function} The callback {Function} that receives a single argument which contains the standard error output from the command. The callback is called as data is received but it's buffered to ensure only complete lines are passed until the source stream closes. After the source stream has closed all remaining data is sent in a final call (optional).
+         * @param {Function} The callback {Function} which receives a single argument containing the exit status (optional).
          */
-        constructor(options: Object);
+        constructor(options: Object, command: string, args: any[], options: Object, stdout: Function, stderr: Function, exit: Function);
     }
 
     /**
      * A wrapper which provides standard error/output line buffering for
      * Node's ChildProcess.
      *
-     * file: src/buffered-process.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/buffered-process.coffee#L21
+     * file: src/buffered-process.js
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/buffered-process.js#L22
      */
     class BufferedProcess { 
         /**
          * Runs the given command by spawning a new child process.
          * @param {Object} An {Object} with the following keys:
+         * @param {string} The {String} command to execute.
+         * @param {any[]} The {Array} of arguments to pass to the command (optional).
+         * @param {Object} {Object} (optional) The options {Object} to pass to Node's `ChildProcess.spawn` method.
+         * @param {Function} {Function} (optional) The callback that receives a single argument which contains the standard output from the command. The callback is called as data is received but it's buffered to ensure only complete lines are passed until the source stream closes. After the source stream has closed all remaining data is sent in a final call.
+         * @param {string} {String}
+         * @param {Function} {Function} (optional) The callback that receives a single argument which contains the standard error output from the command. The callback is called as data is received but it's buffered to ensure only complete lines are passed until the source stream closes. After the source stream has closed all remaining data is sent in a final call.
+         * @param {string} {String}
+         * @param {Function} {Function} (optional) The callback which receives a single argument containing the exit status.
+         * @param {number} {Number}
+         * @param {boolean} {Boolean} (optional) Whether the command will automatically start when this BufferedProcess is created. Defaults to true.  When set to false you must call the `start` method to start the process.
          */
-        constructor(options: Object);
+        constructor(options: Object, command: string, args: any[], options: Object, stdout: Function, data: string, stderr: Function, data: string, exit: Function, code: number, autoStart: boolean);
         /**
          * Will call your callback when an error will be raised by the process.
          * Usually this is due to the command not being available or not on the PATH.
          * You can call `handle()` on the object passed to your callback to indicate
          * that you have handled this error.
          * @param {Function} {Function} callback
+         * @param {Object} {Object}
+         * @param {Object} {Object} the error object
+         * @param {Function} {Function} call this to indicate you have handled the error. The error will not be thrown if this function is called.
          * @returns {Disposable} Returns a {Disposable}
          */
-        onWillThrowError(callback: Function): Disposable;
+        onWillThrowError(callback: Function, errorObject: Object, error: Object, handle: Function): Disposable;
         /**
-         * Terminate the process. 
+         * Terminate the process.
          */
         kill(): void;
     }
@@ -267,8 +314,8 @@ declare module AtomTypes {
      * 
      * An instance of this class is always available as the `atom.clipboard` global.
      *
-     * file: src/clipboard.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/clipboard.coffee#L16
+     * file: src/clipboard.js
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/clipboard.js#L17
      */
     class Clipboard { 
         /**
@@ -277,9 +324,9 @@ declare module AtomTypes {
          * The metadata associated with the text is available by calling
          * {::readWithMetadata}.
          * @param {string} The {String} to store.
-         * @param  The additional info to associate with the text. 
+         * @param  The additional info to associate with the text.
          */
-        write(text: string, metadata: any): void;
+        write(text: string, metadata?: any): void;
         /**
          * Read the text from the clipboard.
          * @returns {string} Returns a {String}.
@@ -298,10 +345,10 @@ declare module AtomTypes {
 
     /**
      * A simple color class returned from {Config::get} when the value
-     * at the key path is of type 'color'. 
+     * at the key path is of type 'color'.
      *
-     * file: src/color.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/color.coffee#L7
+     * file: src/color.js
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/color.js#L7
      */
     class Color { 
         /**
@@ -335,6 +382,12 @@ declare module AtomTypes {
      * command event listeners globally on `atom.commands` and constrain them to
      * specific kinds of elements with CSS selectors.
      * 
+     * Command names must follow the `namespace:action` pattern, where `namespace`
+     * will typically be the name of your package, and `action` describes the
+     * behavior of your command. If either part consists of multiple words, these
+     * must be separated by hyphens. E.g. `awesome-package:turn-it-up-to-eleven`.
+     * All words should be lowercased.
+     * 
      * As the event bubbles upward through the DOM, all registered event listeners
      * with matching selectors are invoked in order of specificity. In the event of a
      * specificity tie, the most recently registered listener is invoked first. This
@@ -356,7 +409,7 @@ declare module AtomTypes {
      * ```
      *
      * file: src/command-registry.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/command-registry.coffee#L41
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/command-registry.coffee#L46
      */
     class CommandRegistry { 
         /**
@@ -373,8 +426,6 @@ declare module AtomTypes {
         * `name` The name of the command. For example, `user:insert-date`.
         * `displayName` The display name of the command. For example,
           `User: Insert Date`.
-        * `jQuery` Present if the command was registered with the legacy
-          `$::command` method.
          */
         findCommands(params: Object): any[];
         /**
@@ -388,6 +439,16 @@ declare module AtomTypes {
          * @param {string} {String} indicating the name of the command to dispatch. 
          */
         dispatch(target: any, commandName: string): void;
+        /**
+         * Invoke the given callback before dispatching a command event.
+         * @param {Function} {Function} to be called before dispatching each command
+         */
+        onWillDispatch(callback: Function): void;
+        /**
+         * Invoke the given callback after dispatching a command event.
+         * @param {Function} {Function} to be called after dispatching each command
+         */
+        onDidDispatch(callback: Function): void;
     }
 
     /**
@@ -397,7 +458,7 @@ declare module AtomTypes {
      * These are very useful when subscribing to multiple events.
      *
      * file: src/composite-disposable.coffee
-     * srcUrl: https://github.com/atom/event-kit/blob/v1.1.0/src/composite-disposable.coffee#L22
+     * srcUrl: https://github.com/atom/event-kit/blob/v2.2.0/src/composite-disposable.coffee#L24
      */
     class CompositeDisposable { 
         /**
@@ -411,12 +472,12 @@ declare module AtomTypes {
          */
         dispose(): void;
         /**
-         * Add a disposable to be disposed when the composite is disposed.
+         * Add disposables to be disposed when the composite is disposed.
          * 
          * If this object has already been disposed, this method has no effect.
-         * @param {Disposable} {Disposable} instance or any object with a `.dispose()` method. 
+         * @param {Disposable} {Disposable} instances or any objects with `.dispose()` methods. 
          */
-        add(disposable: Disposable): void;
+        add(...disposables: Disposable): void;
         /**
          * Remove a previously added disposable.
          * @param {Disposable} {Disposable} instance or any object with a `.dispose()` method. 
@@ -496,7 +557,7 @@ declare module AtomTypes {
      *   # ...
      * ```
      * 
-     * See [package docs](https://atom.io/docs/latest/hacking-atom-package-word-count) for
+     * See [package docs](http://flight-manual.atom.io/hacking-atom/sections/package-word-count/) for
      * more info.
      * 
      * ## Config Schemas
@@ -619,22 +680,6 @@ declare module AtomTypes {
      *       maximum: 11.5
      * ```
      * 
-     * #### object
-     * 
-     * Value must be an object. This allows you to nest config options. Sub options
-     * must be under a `properties key`
-     * 
-     * ```coffee
-     * config:
-     *   someSetting:
-     *     type: 'object'
-     *     properties:
-     *       myChildIntOption:
-     *         type: 'integer'
-     *         minimum: 1.5
-     *         maximum: 11.5
-     * ```
-     * 
      * #### color
      * 
      * Values will be coerced into a {Color} with `red`, `green`, `blue`, and `alpha`
@@ -650,13 +695,34 @@ declare module AtomTypes {
      *     default: 'white'
      * ```
      * 
+     * #### object / Grouping other types
+     * 
+     * A config setting with the type `object` allows grouping a set of config
+     * settings. The group will be visualy separated and has its own group headline.
+     * The sub options must be listed under a `properties` key.
+     * 
+     * ```coffee
+     * config:
+     *   someSetting:
+     *     type: 'object'
+     *     properties:
+     *       myChildIntOption:
+     *         type: 'integer'
+     *         minimum: 1.5
+     *         maximum: 11.5
+     * ```
+     * 
      * ### Other Supported Keys
      * 
      * #### enum
      * 
-     * All types support an `enum` key. The enum key lets you specify all values
-     * that the config setting can possibly be. `enum` _must_ be an array of values
-     * of your specified type. Schema:
+     * All types support an `enum` key, which lets you specify all the values the
+     * setting can take. `enum` may be an array of allowed values (of the specified
+     * type), or an array of objects with `value` and `description` properties, where
+     * the `value` is an allowed value, and the `description` is a descriptive string
+     * used in the settings view.
+     * 
+     * In this example, the setting must be one of the 4 integers:
      * 
      * ```coffee
      * config:
@@ -664,6 +730,20 @@ declare module AtomTypes {
      *     type: 'integer'
      *     default: 4
      *     enum: [2, 4, 6, 8]
+     * ```
+     * 
+     * In this example, the setting must be either 'foo' or 'bar', which are
+     * presented using the provided descriptions in the settings pane:
+     * 
+     * ```coffee
+     * config:
+     *   someSetting:
+     *     type: 'string'
+     *     default: 'foo'
+     *     enum: [
+     *       {value: 'foo', description: 'Foo mode. You want this.'}
+     *       {value: 'bar', description: 'Bar mode. Nobody wants that!'}
+     *     ]
      * ```
      * 
      * Usage:
@@ -690,6 +770,9 @@ declare module AtomTypes {
      * 
      * Descriptions will be displayed below the title in the settings view.
      * 
+     * For a group of config settings the humanized key or the title and the
+     * description are used for the group headline.
+     * 
      * ```coffee
      * config:
      *   someSetting:
@@ -702,12 +785,65 @@ declare module AtomTypes {
      * __Note__: You should strive to be so clear in your naming of the setting that
      * you do not need to specify a title or description!
      * 
+     * Descriptions allow a subset of
+     * [Markdown formatting](https://help.github.com/articles/github-flavored-markdown/).
+     * Specifically, you may use the following in configuration setting descriptions:
+     * 
+     * * **bold** - `**bold**`
+     * * *italics* - `*italics*`
+     * * [links](https://atom.io) - `[links](https://atom.io)`
+     * * `code spans` - `\`code spans\``
+     * * line breaks - `line breaks<br/>`
+     * * ~~strikethrough~~ - `~~strikethrough~~`
+     * 
+     * #### order
+     * 
+     * The settings view orders your settings alphabetically. You can override this
+     * ordering with the order key.
+     * 
+     * ```coffee
+     * config:
+     *   zSetting:
+     *     type: 'integer'
+     *     default: 4
+     *     order: 1
+     *   aSetting:
+     *     type: 'integer'
+     *     default: 4
+     *     order: 2
+     * ```
+     * 
+     * ## Manipulating values outside your configuration schema
+     * 
+     * It is possible to manipulate(`get`, `set`, `observe` etc) values that do not
+     * appear in your configuration schema. For example, if the config schema of the
+     * package 'some-package' is
+     * 
+     * ```coffee
+     * config:
+     * someSetting:
+     *   type: 'boolean'
+     *   default: false
+     * ```
+     * 
+     * You can still do the following
+     * 
+     * ```coffee
+     * let otherSetting  = atom.config.get('some-package.otherSetting')
+     * atom.config.set('some-package.stillAnotherSetting', otherSetting * 5)
+     * ```
+     * 
+     * In other words, if a function asks for a `key-path`, that path doesn't have to
+     * be described in the config schema for the package or any package. However, as
+     * highlighted in the best practices section, you are advised against doing the
+     * above.
+     * 
      * ## Best practices
      * 
      * * Don't depend on (or write to) configuration keys outside of your keypath.
      *
      * file: src/config.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/config.coffee#L291
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/config.coffee#L369
      */
     class Config { 
         /**
@@ -730,7 +866,7 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} with the following keys on which you can call
         `.dispose()` to unsubscribe.
          */
-        observe(keyPath: string, options: Object, callback: Function): Disposable;
+        observe(keyPath: string, options?: Object, callback: Function): Disposable;
         /**
          * Add a listener for changes to a given key path. If `keyPath` is
          * not specified, your callback will be called on changes to any key.
@@ -740,7 +876,7 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} with the following keys on which you can call
         `.dispose()` to unsubscribe.
          */
-        onDidChange(keyPath?: string, optional?: Object, callback?: Function): Disposable;
+        onDidChange(keyPath?: string, options?: Object, callback: Function): Disposable;
         /**
          * Retrieves the setting for the given key.
          * 
@@ -820,7 +956,7 @@ declare module AtomTypes {
          * atom.config.get('editor.tabLength', scope: ['source.js']) # => 4
          * 
          * # Set ruby to 2
-         * atom.config.set('editor.tabLength', 2, scopeSelector: 'source.ruby') # => true
+         * atom.config.set('editor.tabLength', 2, scopeSelector: '.source.ruby') # => true
          * 
          * # Notice it's only set to 2 in the case of ruby
          * atom.config.get('editor.tabLength') # => 4
@@ -853,7 +989,8 @@ declare module AtomTypes {
          * option.
          * @param {string} The {String} name of the key.
          * @returns {Object} Returns an {Object} eg. `{type: 'integer', default: 23, minimum: 1}`.
-         * @returns  Returns `null` when the keyPath has no schema specified.
+         * @returns  Returns `null` when the keyPath has no schema specified, but is accessible
+        from the root schema.
          */
         getSchema(keyPath: string): Object;
         /**
@@ -902,14 +1039,16 @@ declare module AtomTypes {
      * {::add} for more information. 
      *
      * file: src/context-menu-manager.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/context-menu-manager.coffee#L43
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/context-menu-manager.coffee#L42
      */
     class ContextMenuManager { 
         /**
          * Add context menu items scoped by CSS selectors.
          * @param {Object} An {Object} whose keys are CSS selectors and whose values are {Array}s of item {Object}s containing the following keys:
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to remove the
+        added menu items.
          */
-        add(itemsBySelector: Object): void;
+        add(itemsBySelector: Object): Disposable;
     }
 
     /**
@@ -917,10 +1056,10 @@ declare module AtomTypes {
      * where text can be inserted.
      * 
      * Cursors belong to {TextEditor}s and have some metadata attached in the form
-     * of a {Marker}. 
+     * of a {DisplayMarker}. 
      *
      * file: src/cursor.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/cursor.coffee#L13
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/cursor.coffee#L14
      */
     class Cursor { 
         /**
@@ -948,9 +1087,9 @@ declare module AtomTypes {
          */
         setScreenPosition(screenPosition: any[], options?: Object): void;
         /**
-         * @returns  Returns the screen position of the cursor as an Array.
+         * @returns {Point} Returns the screen position of the cursor as a {Point}.
          */
-        getScreenPosition(): any;
+        getScreenPosition(): Point;
         /**
          * Moves a cursor to a given buffer position.
          * @param {any[]} {Array} of two numbers: the buffer row, and the buffer column.
@@ -991,10 +1130,10 @@ declare module AtomTypes {
          */
         isAtEndOfLine(): any;
         /**
-         * @returns {Marker} Returns the underlying {Marker} for the cursor.
+         * @returns {DisplayMarker} Returns the underlying {DisplayMarker} for the cursor.
         Useful with overlay {Decoration}s.
          */
-        getMarker(): Marker;
+        getMarker(): DisplayMarker;
         /**
          * Identifies if the cursor is surrounded by whitespace.
          * 
@@ -1115,6 +1254,14 @@ declare module AtomTypes {
          */
         moveToNextWordBoundary(): void;
         /**
+         * Moves the cursor to the previous subword boundary. 
+         */
+        moveToPreviousSubwordBoundary(): void;
+        /**
+         * Moves the cursor to the next subword boundary. 
+         */
+        moveToNextSubwordBoundary(): void;
+        /**
          * Moves the cursor to the beginning of the buffer line, skipping all
          * whitespace. 
          */
@@ -1170,7 +1317,7 @@ declare module AtomTypes {
         /**
          * Retrieves the range for the current paragraph.
          * 
-         * A paragraph is defined as a block of text surrounded by empty lines.
+         * A paragraph is defined as a block of text surrounded by empty lines or comments.
          * @returns {Range} Returns a {Range}.
          */
         getCurrentParagraphBufferRange(): Range;
@@ -1207,10 +1354,16 @@ declare module AtomTypes {
          * @returns {RegExp} Returns a {RegExp}.
          */
         wordRegExp(options?: Object): RegExp;
+        /**
+         * Get the RegExp used by the cursor to determine what a "subword" is.
+         * @param {Object} {Object} with the following keys:
+         * @returns {RegExp} Returns a {RegExp}.
+         */
+        subwordRegExp(options?: Object): RegExp;
     }
 
     /**
-     * Represents a decoration that follows a {Marker}. A decoration is
+     * Represents a decoration that follows a {DisplayMarker}. A decoration is
      * basically a visual representation of a marker. It allows you to add CSS
      * classes to line numbers in the gutter, lines, and add selection-line regions
      * around marked ranges of text.
@@ -1224,7 +1377,7 @@ declare module AtomTypes {
      * decoration = editor.decorateMarker(marker, {type: 'line', class: 'my-line-class'})
      * ```
      * 
-     * Best practice for destroying the decoration is by destroying the {Marker}.
+     * Best practice for destroying the decoration is by destroying the {DisplayMarker}.
      * 
      * ```coffee
      * marker.destroy()
@@ -1234,14 +1387,14 @@ declare module AtomTypes {
      * the marker. 
      *
      * file: src/decoration.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/decoration.coffee#L31
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/decoration.coffee#L37
      */
     class Decoration { 
         /**
-         * Destroy this marker.
+         * Destroy this marker decoration.
          * 
-         * If you own the marker, you should use {Marker::destroy} which will destroy
-         * this decoration. 
+         * You can also destroy the marker if you own it, which will destroy this
+         * decoration. 
          */
         destroy(): void;
         /**
@@ -1281,28 +1434,27 @@ declare module AtomTypes {
      * An instance of this class is always available as the `atom.deserializers`
      * global.
      *
-     * file: src/deserializer-manager.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/deserializer-manager.coffee#L24
+     * file: src/deserializer-manager.js
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/deserializer-manager.js#L24
      */
     class DeserializerManager { 
         /**
          * Register the given class(es) as deserializers.
-         * @param  One or more deserializers to register. A deserializer can be any object with a `.name` property and a `.deserialize()` method. A common approach is to register a *constructor* as the deserializer for its instances by adding a `.deserialize()` class method. 
+         * @param {Atom} One or more deserializers to register. A deserializer can be any object with a `.name` property and a `.deserialize()` method. A common approach is to register a *constructor* as the deserializer for its instances by adding a `.deserialize()` class method. When your method is called, it will be passed serialized state as the first argument and the {Atom} environment object as the second argument, which is useful if you wish to avoid referencing the `atom` global.
          */
-        add(deserializers: any): void;
+        add(deserializers: Atom): void;
         /**
          * Deserialize the state and params.
          * @param {Object} The state {Object} to deserialize.
-         * @param {Object} The params {Object} to pass as the second arguments to the deserialize method of the deserializer. 
          */
-        deserialize(state: Object, params: Object): void;
+        deserialize(state: Object): void;
     }
 
     /**
      * Represents a directory on disk that can be watched for changes. 
      *
      * file: src/directory.coffee
-     * srcUrl: https://github.com/atom/node-pathwatcher/blob/v4.4.0/src/directory.coffee#L14
+     * srcUrl: https://github.com/atom/node-pathwatcher/blob/v6.8.0/src/directory.coffee#L13
      */
     class Directory { 
         /**
@@ -1314,9 +1466,12 @@ declare module AtomTypes {
         /**
          * Creates the directory on disk that corresponds to `::getPath()` if
          * no such directory already exists.
-         * @param {number} Optional {Number} that defaults to `0777`. Returns a {Promise} that resolves once the directory is created on disk. It resolves to a boolean value that is true if the directory was created or false if it already existed. 
+         * @param {number} {Number} that defaults to `0777`.
+         * @returns {Promise<any>} Returns a {Promise} that resolves once the directory is created on disk. It
+        resolves to a boolean value that is true if the directory was created or
+        false if it already existed.
          */
-        create(mode: number): void;
+        create(mode?: number): Promise<any>;
         /**
          * Invoke the given callback when the directory's contents change.
          * @param {Function} {Function} to be called when the directory's contents change.
@@ -1331,6 +1486,10 @@ declare module AtomTypes {
          * @returns {boolean} Returns a {Boolean}, always true.
          */
         isDirectory(): boolean;
+        /**
+         * @returns {boolean} Returns a {Boolean} indicating whether or not this is a symbolic link
+         */
+        isSymbolicLink(): boolean;
         /**
          * @returns {boolean} Returns a promise that resolves to a {Boolean}, true if the
         directory exists, false otherwise.
@@ -1401,11 +1560,368 @@ declare module AtomTypes {
          */
         getEntries(callback: Function): void;
         /**
-         * @returns  Returns whether the given path (real or symbolic) is inside this
-        directory. This method does not actually check if the path exists, it just
-        checks if the path is under this directory.
+         * Determines if the given path (real or symbolic) is inside this
+         * directory. This method does not actually check if the path exists, it just
+         * checks if the path is under this directory.
+         * @param {string} The {String} path to check.
+         * @returns {boolean} Returns a {Boolean} whether the given path is inside this directory.
          */
-        contains(): any;
+        contains(pathToCheck: string): boolean;
+    }
+
+    /**
+     * Represents a buffer annotation that remains logically stationary
+     * even as the buffer changes. This is used to represent cursors, folds, snippet
+     * targets, misspelled words, and anything else that needs to track a logical
+     * location in the buffer over time.
+     * 
+     * ### DisplayMarker Creation
+     * 
+     * Use {DisplayMarkerLayer::markBufferRange} or {DisplayMarkerLayer::markScreenRange}
+     * rather than creating Markers directly.
+     * 
+     * ### Head and Tail
+     * 
+     * Markers always have a *head* and sometimes have a *tail*. If you think of a
+     * marker as an editor selection, the tail is the part that's stationary and the
+     * head is the part that moves when the mouse is moved. A marker without a tail
+     * always reports an empty range at the head position. A marker with a head position
+     * greater than the tail is in a "normal" orientation. If the head precedes the
+     * tail the marker is in a "reversed" orientation.
+     * 
+     * ### Validity
+     * 
+     * Markers are considered *valid* when they are first created. Depending on the
+     * invalidation strategy you choose, certain changes to the buffer can cause a
+     * marker to become invalid, for example if the text surrounding the marker is
+     * deleted. The strategies, in order of descending fragility:
+     * 
+     * * __never__: The marker is never marked as invalid. This is a good choice for
+     *   markers representing selections in an editor.
+     * * __surround__: The marker is invalidated by changes that completely surround it.
+     * * __overlap__: The marker is invalidated by changes that surround the
+     *   start or end of the marker. This is the default.
+     * * __inside__: The marker is invalidated by changes that extend into the
+     *   inside of the marker. Changes that end at the marker's start or
+     *   start at the marker's end do not invalidate the marker.
+     * * __touch__: The marker is invalidated by a change that touches the marked
+     *   region in any way, including changes that end at the marker's
+     *   start or start at the marker's end. This is the most fragile strategy.
+     * 
+     * See {TextBuffer::markRange} for usage. 
+     *
+     * file: src/display-marker.coffee
+     * srcUrl: https://github.com/atom/text-buffer/blob/v10.3.12/src/display-marker.coffee#L43
+     */
+    class DisplayMarker { 
+        /**
+         * Destroys the marker, causing it to emit the 'destroyed' event. Once
+         * destroyed, a marker cannot be restored by undo/redo operations. 
+         */
+        destroy(): void;
+        /**
+         * Creates and returns a new {DisplayMarker} with the same properties as
+         * this marker.
+         * 
+         * {Selection} markers (markers with a custom property `type: "selection"`)
+         * should be copied with a different `type` value, for example with
+         * `marker.copy({type: null})`. Otherwise, the new marker's selection will
+         * be merged with this marker's selection, and a `null` value will be
+         * returned.
+         * @param {Object} {Object} properties to associate with the new marker. The new marker's properties are computed by extending this marker's properties with `properties`.
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
+         */
+        copy(properties?: Object): DisplayMarker;
+        /**
+         * Invoke the given callback when the state of the marker changes.
+         * @param {Function} {Function} to be called when the marker changes.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidChange(callback: Function): Disposable;
+        /**
+         * Invoke the given callback when the marker is destroyed.
+         * @param {Function} {Function} to be called when the marker is destroyed.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidDestroy(callback: Function): Disposable;
+        /**
+         * @returns {boolean} Returns a {Boolean} indicating whether the marker is valid.
+        Markers can be invalidated when a region surrounding them in the buffer is
+        changed.
+         */
+        isValid(): boolean;
+        /**
+         * @returns {boolean} Returns a {Boolean} indicating whether the marker has been
+        destroyed. A marker can be invalid without being destroyed, in which case
+        undoing the invalidating operation would restore the marker. Once a marker
+        is destroyed by calling {DisplayMarker::destroy}, no undo/redo operation
+        can ever bring it back.
+         */
+        isDestroyed(): boolean;
+        /**
+         * @returns {boolean} Returns a {Boolean} indicating whether the head precedes the tail.
+         */
+        isReversed(): boolean;
+        /**
+         * @returns {boolean} Returns a {Boolean} indicating whether changes that occur exactly
+        at the marker's head or tail cause it to move.
+         */
+        isExclusive(): boolean;
+        /**
+         * Get the invalidation strategy for this marker.
+         * 
+         * Valid values include: `never`, `surround`, `overlap`, `inside`, and `touch`.
+         * @returns {string} Returns a {String}.
+         */
+        getInvalidationStrategy(): string;
+        /**
+         * @returns {Object} Returns an {Object} containing any custom properties associated with
+        the marker.
+         */
+        getProperties(): Object;
+        /**
+         * Merges an {Object} containing new properties into the marker's
+         * existing properties.
+         * @param {Object} {Object} 
+         */
+        setProperties(properties: Object): void;
+        /**
+         * @returns  Returns whether this marker matches the given parameters. The
+        parameters are the same as {DisplayMarkerLayer::findMarkers}.
+         */
+        matchesProperties(): any;
+        /**
+         * Compares this marker to another based on their ranges.
+         * @param {DisplayMarker} {DisplayMarker}
+         * @returns {number} Returns a {Number}
+         */
+        compare(other: DisplayMarker): number;
+        /**
+         * @param {DisplayMarker} {DisplayMarker} other marker 
+         * @returns {boolean} Returns a {Boolean} indicating whether this marker is equivalent to
+        another marker, meaning they have the same range and options.
+         */
+        isEqual(other: DisplayMarker): boolean;
+        /**
+         * Gets the buffer range of this marker.
+         * @returns {Range} Returns a {Range}.
+         */
+        getBufferRange(): Range;
+        /**
+         * Gets the screen range of this marker.
+         * @returns {Range} Returns a {Range}.
+         */
+        getScreenRange(): Range;
+        /**
+         * Modifies the buffer range of this marker.
+         * @param {Range} The new {Range} to use
+         * @param {Object} {Object} properties to associate with the marker.
+         */
+        setBufferRange(bufferRange: Range, properties?: Object): void;
+        /**
+         * Modifies the screen range of this marker.
+         * @param {Range} The new {Range} to use
+         * @param {Object} An {Object} with the following keys:
+         */
+        setScreenRange(screenRange: Range, options?: Object): void;
+        /**
+         * Retrieves the buffer position of the marker's head.
+         * @returns {Point} Returns a {Point}.
+         */
+        getHeadBufferPosition(): Point;
+        /**
+         * Sets the buffer position of the marker's head.
+         * @param {Point} The new {Point} to use 
+         */
+        setHeadBufferPosition(bufferPosition: Point): void;
+        /**
+         * Retrieves the screen position of the marker's head.
+         * @param {Object} An {Object} with the following keys:
+         * @returns {Point} Returns a {Point}.
+         */
+        getHeadScreenPosition(options?: Object): Point;
+        /**
+         * Sets the screen position of the marker's head.
+         * @param {Point} The new {Point} to use
+         * @param {Object} An {Object} with the following keys:
+         */
+        setHeadScreenPosition(screenPosition: Point, options?: Object): void;
+        /**
+         * Retrieves the buffer position of the marker's tail.
+         * @returns {Point} Returns a {Point}.
+         */
+        getTailBufferPosition(): Point;
+        /**
+         * Sets the buffer position of the marker's tail.
+         * @param {Point} The new {Point} to use 
+         */
+        setTailBufferPosition(bufferPosition: Point): void;
+        /**
+         * Retrieves the screen position of the marker's tail.
+         * @param {Object} An {Object} with the following keys:
+         * @returns {Point} Returns a {Point}.
+         */
+        getTailScreenPosition(options?: Object): Point;
+        /**
+         * Sets the screen position of the marker's tail.
+         * @param {Point} The new {Point} to use
+         * @param {Object} An {Object} with the following keys:
+         */
+        setTailScreenPosition(screenPosition: Point, options?: Object): void;
+        /**
+         * Retrieves the buffer position of the marker's start. This will always be
+         * less than or equal to the result of {DisplayMarker::getEndBufferPosition}.
+         * @returns {Point} Returns a {Point}.
+         */
+        getStartBufferPosition(): Point;
+        /**
+         * Retrieves the screen position of the marker's start. This will always be
+         * less than or equal to the result of {DisplayMarker::getEndScreenPosition}.
+         * @param {Object} An {Object} with the following keys:
+         * @returns {Point} Returns a {Point}.
+         */
+        getStartScreenPosition(options?: Object): Point;
+        /**
+         * Retrieves the buffer position of the marker's end. This will always be
+         * greater than or equal to the result of {DisplayMarker::getStartBufferPosition}.
+         * @returns {Point} Returns a {Point}.
+         */
+        getEndBufferPosition(): Point;
+        /**
+         * Retrieves the screen position of the marker's end. This will always be
+         * greater than or equal to the result of {DisplayMarker::getStartScreenPosition}.
+         * @param {Object} An {Object} with the following keys:
+         * @returns {Point} Returns a {Point}.
+         */
+        getEndScreenPosition(options?: Object): Point;
+        /**
+         * @returns {boolean} Returns a {Boolean} indicating whether the marker has a tail.
+         */
+        hasTail(): boolean;
+        /**
+         * Plants the marker's tail at the current head position. After calling
+         * the marker's tail position will be its head position at the time of the
+         * call, regardless of where the marker's head is moved. 
+         */
+        plantTail(): void;
+        /**
+         * Removes the marker's tail. After calling the marker's head position
+         * will be reported as its current tail position until the tail is planted
+         * again. 
+         */
+        clearTail(): void;
+    }
+
+    /**
+     * *Experimental:* A container for a related set of markers at the
+     * {DisplayLayer} level. Wraps an underlying {MarkerLayer} on the {TextBuffer}.
+     * 
+     * This API is experimental and subject to change on any release. 
+     *
+     * file: src/display-marker-layer.coffee
+     * srcUrl: https://github.com/atom/text-buffer/blob/v10.3.12/src/display-marker-layer.coffee#L11
+     */
+    class DisplayMarkerLayer { 
+        /**
+         * Destroy this layer. 
+         */
+        destroy(): void;
+        /**
+         * Destroy all markers in this layer. 
+         */
+        clear(): void;
+        /**
+         * Determine whether this layer has been destroyed.
+         * @returns {boolean} Returns a {Boolean}.
+         */
+        isDestroyed(): boolean;
+        /**
+         * Subscribe to be notified synchronously when this layer is destroyed.
+         * @returns {Disposable} Returns a {Disposable}.
+         */
+        onDidDestroy(): Disposable;
+        /**
+         * Subscribe to be notified asynchronously whenever markers are
+         * created, updated, or destroyed on this layer. *Prefer this method for
+         * optimal performance when interacting with layers that could contain large
+         * numbers of markers.*
+         * 
+         * Subscribers are notified once, asynchronously when any number of changes
+         * occur in a given tick of the event loop. You should re-query the layer
+         * to determine the state of markers in which you're interested in. It may
+         * be counter-intuitive, but this is much more efficient than subscribing to
+         * events on individual markers, which are expensive to deliver.
+         * @param {Function} A {Function} that will be called with no arguments when changes occur on this layer.
+         * @returns {Disposable} Returns a {Disposable}.
+         */
+        onDidUpdate(callback: Function): Disposable;
+        /**
+         * Subscribe to be notified synchronously whenever markers are created
+         * on this layer. *Avoid this method for optimal performance when interacting
+         * with layers that could contain large numbers of markers.*
+         * 
+         * You should prefer {onDidUpdate} when synchronous notifications aren't
+         * absolutely necessary.
+         * @param {Function} A {Function} that will be called with a {TextEditorMarker} whenever a new marker is created.
+         * @returns {Disposable} Returns a {Disposable}.
+         */
+        onDidCreateMarker(callback: Function): Disposable;
+        /**
+         * Create a marker with the given screen range.
+         * @param {Range} A {Range} or range-compatible {Array}
+         * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
+         */
+        markScreenRange(range: Range, options: any): DisplayMarker;
+        /**
+         * Create a marker on this layer with its head at the given screen
+         * position and no tail.
+         * @param {Point} A {Point} or point-compatible {Array}
+         * @param {Object} An {Object} with the following keys:
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
+         */
+        markScreenPosition(screenPosition: Point, options?: Object): DisplayMarker;
+        /**
+         * Create a marker with the given buffer range.
+         * @param {Range} A {Range} or range-compatible {Array}
+         * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
+         */
+        markBufferRange(range: Range, options: any): DisplayMarker;
+        /**
+         * Create a marker on this layer with its head at the given buffer
+         * position and no tail.
+         * @param {Point} A {Point} or point-compatible {Array}
+         * @param {Object} An {Object} with the following keys:
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
+         */
+        markBufferPosition(bufferPosition: Point, options?: Object): DisplayMarker;
+        /**
+         * Get an existing marker by its id.
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
+         */
+        getMarker(): DisplayMarker;
+        /**
+         * Get all markers in the layer.
+         * @returns {any[]} Returns an {Array} of {DisplayMarker}s.
+         */
+        getMarkers(): any[];
+        /**
+         * Get the number of markers in the marker layer.
+         * @returns {number} Returns a {Number}.
+         */
+        getMarkerCount(): number;
+        /**
+         * Find markers in the layer conforming to the given parameters.
+         * 
+         * This method finds markers based on the given properties. Markers can be
+         * associated with custom properties that will be compared with basic equality.
+         * In addition, there are several special properties that will be compared
+         * with the range of the markers rather than their properties.
+         * @param {Object} An {Object} containing properties that each returned marker must satisfy. Markers can be associated with custom properties, which are compared with basic equality. In addition, several reserved properties can be used to filter markers based on their current range:
+         * @returns {any[]} Returns an {Array} of {DisplayMarker}s
+         */
+        findMarkers(properties: Object): any[];
     }
 
     /**
@@ -1413,14 +1929,22 @@ declare module AtomTypes {
      * {Emitter::on} returns disposables representing subscriptions. 
      *
      * file: src/disposable.coffee
-     * srcUrl: https://github.com/atom/event-kit/blob/v1.1.0/src/disposable.coffee#L6
+     * srcUrl: https://github.com/atom/event-kit/blob/v2.2.0/src/disposable.coffee#L4
      */
     class Disposable { 
         /**
-         * Construct a Disposable
-         * @param  An action to perform when {::dispose} is called for the first time. 
+         * Ensure that `object` correctly implements the `Disposable`
+         * contract.
+         * @param {Object} An {Object} you want to perform the check against.
+         * @returns {boolean} Returns a {Boolean} indicating whether `object` is a valid `Disposable`.
          */
-        constructor(disposalAction: any);
+        static isDisposable(object: Object): boolean;
+
+        /**
+         * Construct a Disposable
+         * @param {Function} A {Function} to call when {::dispose} is called for the first time. 
+         */
+        constructor(disposalAction: Function);
         /**
          * Perform the disposal action, indicating that the resource associated
          * with this disposable is no longer needed.
@@ -1455,7 +1979,7 @@ declare module AtomTypes {
      * ```
      *
      * file: src/emitter.coffee
-     * srcUrl: https://github.com/atom/event-kit/blob/v1.1.0/src/emitter.coffee#L25
+     * srcUrl: https://github.com/atom/event-kit/blob/v2.2.0/src/emitter.coffee#L25
      */
     class Emitter { 
         /**
@@ -1466,6 +1990,10 @@ declare module AtomTypes {
          * ```
          */
         constructor();
+        /**
+         * Clear out any existing subscribers. 
+         */
+        clear(): void;
         /**
          * Unsubscribe all handlers. 
          */
@@ -1507,7 +2035,7 @@ declare module AtomTypes {
      * written to. 
      *
      * file: src/file.coffee
-     * srcUrl: https://github.com/atom/node-pathwatcher/blob/v4.4.0/src/file.coffee#L19
+     * srcUrl: https://github.com/atom/node-pathwatcher/blob/v6.8.0/src/file.coffee#L18
      */
     class File { 
         /**
@@ -1557,6 +2085,10 @@ declare module AtomTypes {
          * @returns {boolean} Returns a {Boolean}, always false.
          */
         isDirectory(): boolean;
+        /**
+         * @returns {boolean} Returns a {Boolean} indicating whether or not this is a symbolic link
+         */
+        isSymbolicLink(): boolean;
         /**
          * @returns {boolean} Returns a promise that resolves to a {Boolean}, true if the file
         exists, false otherwise.
@@ -1608,15 +2140,25 @@ declare module AtomTypes {
         /**
          * Reads the contents of the file.
          * @param {boolean} A {Boolean} indicating whether to require a direct read or if a cached copy is acceptable.
-         * @returns  Returns a promise that resovles to a String.
+         * @returns  Returns a promise that resolves to a String.
          */
         read(flushCache: boolean): any;
+        /**
+         * @returns  Returns a stream to read the content of the file.
+         * @returns {ReadStream} Returns a {ReadStream} object.
+         */
+        createReadStream(): ReadStream;
         /**
          * Overwrites the file with the given text.
          * @param {string} The {String} text to write to the underlying file.
          * @returns {Promise<any>} Returns a {Promise} that resolves when the file has been written.
          */
         write(text: string): Promise<any>;
+        /**
+         * @returns  Returns a stream to write content to the file.
+         * @returns {WriteStream} Returns a {WriteStream} object.
+         */
+        createWriteStream(): WriteStream;
         /**
          * Overwrites the file with the given text.
          * @param {string} The {String} text to write to the underlying file.
@@ -1629,8 +2171,8 @@ declare module AtomTypes {
      * Represents the underlying git operations performed by Atom.
      * 
      * This class shouldn't be instantiated directly but instead by accessing the
-     * `atom.project` global and calling `getRepo()`. Note that this will only be
-     * available when the project is backed by a Git repository.
+     * `atom.project` global and calling `getRepositories()`. Note that this will
+     * only be available when the project is backed by a Git repository.
      * 
      * This class handles submodules automatically by taking a `path` argument to many
      * of the methods.  This `path` argument will determine which underlying
@@ -1639,13 +2181,13 @@ declare module AtomTypes {
      * For a repository with submodules this would have the following outcome:
      * 
      * ```coffee
-     * repo = atom.project.getRepo()
+     * repo = atom.project.getRepositories()[0]
      * repo.getShortHead() # 'master'
      * repo.getShortHead('vendor/path/to/a/submodule') # 'dead1234'
      * ```
      *
      * file: src/git-repository.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/git-repository.coffee#L44
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/git-repository.coffee#L44
      */
     class GitRepository { 
         /**
@@ -1664,10 +2206,16 @@ declare module AtomTypes {
          */
         destroy(): void;
         /**
-         * Invoke the given callback when this GitRepository's destroy() method
-         * is invoked. 
+         * @returns {boolean} Returns a {Boolean} indicating if this repository has been destroyed.
          */
-        onDidDestroy(): void;
+        isDestroyed(): boolean;
+        /**
+         * Invoke the given callback when this GitRepository's destroy() method
+         * is invoked.
+         * @param {Function} {Function}
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidDestroy(callback: Function): Disposable;
         /**
          * Invoke the given callback when a specific file's status has
          * changed. When a file is updated, reloaded, etc, and the status changes, this
@@ -1746,10 +2294,11 @@ declare module AtomTypes {
          */
         getCachedUpstreamAheadBehindCount(path: string): Object;
         /**
+         * @param {string} The {String} key for the configuration to lookup.
          * @param {string} An optional {String} path in the repository to get this information for, only needed if the repository has submodules. 
          * @returns  Returns the git configuration value specified by the key.
          */
-        getConfigValue(path: string): any;
+        getConfigValue(key: string, path: string): any;
         /**
          * @param {string} {String} path in the repository to get this information for, only needed if the repository has submodules. 
          * @returns  Returns the origin url of the repository.
@@ -1779,18 +2328,23 @@ declare module AtomTypes {
          */
         getReferenceTarget(reference: string, path: string): string;
         /**
+         * @param {string} The {String} path to check.
          * @returns  Returns true if the given path is modified.
+         * @returns {boolean} Returns a {Boolean} that's true if the `path` is modified.
          */
-        isPathModified(): any;
+        isPathModified(path: string): boolean;
         /**
+         * @param {string} The {String} path to check.
          * @returns  Returns true if the given path is new.
+         * @returns {boolean} Returns a {Boolean} that's true if the `path` is new.
          */
-        isPathNew(): any;
+        isPathNew(path: string): boolean;
         /**
          * Is the given path ignored?
-         * @returns {boolean} Returns a {Boolean}.
+         * @param {string} The {String} path to check.
+         * @returns {boolean} Returns a {Boolean} that's true if the `path` is ignored.
          */
-        isPathIgnored(): boolean;
+        isPathIgnored(path: string): boolean;
         /**
          * Get the status of a directory in the repository's working directory.
          * @param {string} The {String} path to check.
@@ -1800,12 +2354,11 @@ declare module AtomTypes {
         getDirectoryStatus(path: string): number;
         /**
          * Get the status of a single path in the repository.
-         * 
-         * `path` A {String} repository-relative path.
+         * @param {string} A {String} repository-relative path.
          * @returns {number} Returns a {Number} representing the status. This value can be passed to
         {::isStatusModified} or {::isStatusNew} to get more information.
          */
-        getPathStatus(): number;
+        getPathStatus(path: string): number;
         /**
          * Get the cached status for the given path.
          * @param {string} A {String} path in the repository, relative or absolute.
@@ -1813,13 +2366,17 @@ declare module AtomTypes {
          */
         getCachedPathStatus(path: string): number;
         /**
+         * @param {number} A {Number} representing the status.
          * @returns  Returns true if the given status indicates modification.
+         * @returns {boolean} Returns a {Boolean} that's true if the `status` indicates modification.
          */
-        isStatusModified(): any;
+        isStatusModified(status: number): boolean;
         /**
+         * @param {number} A {Number} representing the status.
          * @returns  Returns true if the given status indicates a new path.
+         * @returns {boolean} Returns a {Boolean} that's true if the `status` indicates a new path.
          */
-        isStatusNew(): any;
+        isStatusNew(status: number): boolean;
         /**
          * Retrieves the number of lines added and removed to a path.
          * 
@@ -1875,7 +2432,7 @@ declare module AtomTypes {
      * a {GrammarRegistry} by calling {GrammarRegistry::loadGrammar}. 
      *
      * file: src/grammar.coffee
-     * srcUrl: https://github.com/atom/first-mate/blob/v3.1.0/src/grammar.coffee#L21
+     * srcUrl: https://github.com/atom/first-mate/blob/v6.3.0/src/grammar.coffee#L19
      */
     class Grammar { 
         /**
@@ -1898,7 +2455,14 @@ declare module AtomTypes {
          * @param {boolean} A optional {Boolean} denoting whether this is the first line in the file which defaults to `false`. This should be `true` when tokenizing the first line in the file.
          * @returns {Object} Returns an {Object} containing the following properties:
         
-        * `token` An {Array} of tokens covering the entire line of text.
+        * `line` The {String} of text that was tokenized.
+        * `tags` An {Array} of integer scope ids and strings. Positive ids
+          indicate the beginning of a scope, and negative tags indicate the end.
+          To resolve ids to scope names, call {GrammarRegistry::scopeForId} with the
+          absolute value of the id.
+        * `tokens` This is a dynamic property. Invoking it will incur additional
+          overhead, but will automatically translate the `tags` into token objects
+          with `value` and `scopes` properties.
         * `ruleStack` An {Array} of rules representing the tokenized state at the
           end of the line. These should be passed back into this method when
           tokenizing the next line in the file.
@@ -1910,7 +2474,7 @@ declare module AtomTypes {
      * Registry containing one or more grammars. 
      *
      * file: src/grammar-registry.coffee
-     * srcUrl: https://github.com/atom/first-mate/blob/v3.1.0/src/grammar-registry.coffee#L11
+     * srcUrl: https://github.com/atom/first-mate/blob/v6.3.0/src/grammar-registry.coffee#L11
      */
     class GrammarRegistry { 
         /**
@@ -1978,46 +2542,92 @@ declare module AtomTypes {
          * @returns  Returns .
          */
         loadGrammar(grammarPath: string, callback: Function): any;
+    }
+
+    /**
+     * Represents a gutter within a {TextEditor}.
+     * 
+     * See {TextEditor::addGutter} for information on creating a gutter. 
+     *
+     * file: src/gutter.coffee
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/gutter.coffee#L9
+     */
+    class Gutter { 
         /**
-         * Get the grammar override for the given file path.
-         * @param {string} A {String} file path.
-         * @returns {Grammar} Returns a {Grammar} or .
+         * Destroys the gutter. 
          */
-        grammarOverrideForPath(filePath: string): Grammar;
+        destroy(): void;
         /**
-         * Set the grammar override for the given file path.
-         * @param {string} A non-empty {String} file path.
-         * @param {string} A {String} such as `"source.js"`.
-         * @returns {Grammar} Returns a {Grammar} or .
+         * Calls your `callback` when the gutter's visibility changes.
+         * @param {Function} {Function}
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        setGrammarOverrideForPath(filePath: string, scopeName: string): Grammar;
+        onDidChangeVisible(callback: Function): Disposable;
         /**
-         * Remove the grammar override for the given file path.
-         * @param {string} A {String} file path.
-         * @returns  Returns .
+         * Calls your `callback` when the gutter is destroyed.
+         * @param {Function} {Function}
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
-        clearGrammarOverrideForPath(filePath: string): any;
+        onDidDestroy(callback: Function): Disposable;
         /**
-         * Remove all grammar overrides.
-         * @returns  Returns .
+         * Hide the gutter. 
          */
-        clearGrammarOverrides(): any;
+        hide(): void;
         /**
-         * Select a grammar for the given file path and file contents.
+         * Show the gutter. 
+         */
+        show(): void;
+        /**
+         * Determine whether the gutter is visible.
+         * @returns {boolean} Returns a {Boolean}.
+         */
+        isVisible(): boolean;
+        /**
+         * Add a decoration that tracks a {DisplayMarker}. When the marker moves,
+         * is invalidated, or is destroyed, the decoration will be updated to reflect
+         * the marker's state.
+         * @param {DisplayMarker} A {DisplayMarker} you want this decoration to follow.
+         * @param {Object} An {Object} representing the decoration. It is passed to {TextEditor::decorateMarker} as its `decorationParams` and so supports all options documented there.
+         * @returns {Decoration} Returns a {Decoration} object
+         */
+        decorateMarker(marker: DisplayMarker, decorationParams: Object): Decoration;
+    }
+
+    /**
+     * History manager for remembering which projects have been opened.
+     * 
+     * An instance of this class is always available as the `atom.history` global.
+     * 
+     * The project history is used to enable the 'Reopen Project' menu.
+     *
+     * file: src/history-manager.js
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/history-manager.js#L10
+     */
+    class HistoryManager { 
+        /**
+         * Obtain a list of previously opened projects.
+         * @returns {any[]} Returns an {Array} of {HistoryProject} objects, most recent first.
+         */
+        getProjects(): any[];
+        /**
+         * Clear all projects from the history.
          * 
-         * This picks the best match by checking the file path and contents against
-         * each grammar.
-         * @param {string} A {String} file path.
-         * @param {string} A {String} of text for the file path.
-         * @returns {Grammar} Returns a {Grammar}, never null.
+         * Note: This is not a privacy function - other traces will still exist,
+         * e.g. window state.
          */
-        selectGrammar(filePath: string, fileContents: string): Grammar;
+        clearProjects(): void;
+        /**
+         * Invoke the given callback when the list of projects changes.
+         * @param {Function} {Function}
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidChangeProjects(callback: Function): Disposable;
     }
 
     /**
      * Allows commands to be associated with keystrokes in a
      * context-sensitive way. In Atom, you can access a global instance of this
-     * object via `atom.keymap`.
+     * object via `atom.keymaps`.
      * 
      * Key bindings are plain JavaScript objects containing **CSS selectors** as
      * their top level keys, then **keystroke patterns** mapped to commands.
@@ -2067,7 +2677,7 @@ declare module AtomTypes {
      * again. 
      *
      * file: src/keymap-manager.coffee
-     * srcUrl: https://github.com/atom/atom-keymap/blob/v5.1.2/src/keymap-manager.coffee#L67
+     * srcUrl: https://github.com/atom/atom-keymap/blob/v7.1.20/src/keymap-manager.coffee#L66
      */
     class KeymapManager { 
         /**
@@ -2082,6 +2692,11 @@ declare module AtomTypes {
          * @param {Object} An {Object} containing properties to assign to the keymap.  You can pass custom properties to be used by extension methods. The following properties are also supported:
          */
         constructor(options: Object);
+        /**
+         * Clear all registered key bindings and enqueued keystrokes. For use
+         * in tests. 
+         */
+        clear(): void;
         /**
          * Unwatch all watched paths. 
          */
@@ -2116,9 +2731,10 @@ declare module AtomTypes {
         /**
          * Add sets of key bindings grouped by CSS selector.
          * @param {string} A {String} (usually a path) uniquely identifying the given bindings so they can be removed later.
-         * @param {Object} An {Object} whose top-level keys point at sub-objects mapping keystroke patterns to commands. 
+         * @param {Object} An {Object} whose top-level keys point at sub-objects mapping keystroke patterns to commands.
+         * @param {number} A {Number} used to sort keybindings which have the same specificity. Defaults to `0`. 
          */
-        add(source: string, bindings: Object): void;
+        add(source: string, bindings: Object, priority: number): void;
         /**
          * Get all current key bindings.
          * @returns {any[]} Returns an {Array} of {KeyBinding}s.
@@ -2142,9 +2758,10 @@ declare module AtomTypes {
          * 
          * This method doesn't perform the initial load of the key bindings file. If
          * that's what you're looking for, call {::loadKeymap} with `watch: true`.
-         * @param {string} A {String} containing a path to a file or a directory. If the path is a directory, all files inside it will be loaded. 
+         * @param {string} A {String} containing a path to a file or a directory. If the path is a directory, all files inside it will be loaded.
+         * @param {Object} An {Object} containing the following optional keys:
          */
-        watchKeymap(path: string): void;
+        watchKeymap(path: string, options: Object): void;
         /**
          * Dispatch a custom event associated with the matching key binding for
          * the given `KeyboardEvent` if one can be found.
@@ -2175,6 +2792,16 @@ declare module AtomTypes {
          */
         keystrokeForKeyboardEvent(event: any): string;
         /**
+         * Customize translation of raw keyboard events to keystroke strings.
+         * This API is useful for working around Chrome bugs or changing how Atom
+         * resolves certain key combinations. If multiple resolvers are installed,
+         * the most recently-added resolver returning a string for a given keystroke
+         * takes precedence.
+         * @param {Function} A {Function} that returns a keystroke {String} and is called  with an object containing the following keys:
+         * @returns {Disposable} Returns a {Disposable} that removes the added resolver.
+         */
+        addKeystrokeResolver(resolver: Function): Disposable;
+        /**
          * Get the number of milliseconds allowed before pending states caused
          * by partial matches of multi-keystroke bindings are terminated.
          * @returns {number} Returns a {Number}
@@ -2183,226 +2810,132 @@ declare module AtomTypes {
     }
 
     /**
-     * Represents a buffer annotation that remains logically stationary
-     * even as the buffer changes. This is used to represent cursors, folds, snippet
-     * targets, misspelled words, and anything else that needs to track a logical
-     * location in the buffer over time.
-     * 
-     * ### Marker Creation
-     * 
-     * Use {TextEditor::markBufferRange} rather than creating Markers directly.
-     * 
-     * ### Head and Tail
-     * 
-     * Markers always have a *head* and sometimes have a *tail*. If you think of a
-     * marker as an editor selection, the tail is the part that's stationary and the
-     * head is the part that moves when the mouse is moved. A marker without a tail
-     * always reports an empty range at the head position. A marker with a head position
-     * greater than the tail is in a "normal" orientation. If the head precedes the
-     * tail the marker is in a "reversed" orientation.
-     * 
-     * ### Validity
-     * 
-     * Markers are considered *valid* when they are first created. Depending on the
-     * invalidation strategy you choose, certain changes to the buffer can cause a
-     * marker to become invalid, for example if the text surrounding the marker is
-     * deleted. The strategies, in order of descending fragility:
-     * 
-     * * __never__: The marker is never marked as invalid. This is a good choice for
-     *   markers representing selections in an editor.
-     * * __surround__: The marker is invalidated by changes that completely surround it.
-     * * __overlap__: The marker is invalidated by changes that surround the
-     *   start or end of the marker. This is the default.
-     * * __inside__: The marker is invalidated by changes that extend into the
-     *   inside of the marker. Changes that end at the marker's start or
-     *   start at the marker's end do not invalidate the marker.
-     * * __touch__: The marker is invalidated by a change that touches the marked
-     *   region in any way, including changes that end at the marker's
-     *   start or start at the marker's end. This is the most fragile strategy.
-     * 
-     * See {TextEditor::markBufferRange} for usage. 
+     * Represents a decoration that applies to every marker on a given
+     * layer. Created via {TextEditor::decorateMarkerLayer}. 
      *
-     * file: src/marker.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/marker.coffee#L44
+     * file: src/layer-decoration.coffee
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/layer-decoration.coffee#L7
      */
-    class Marker { 
+    class LayerDecoration { 
         /**
-         * Destroys the marker, causing it to emit the 'destroyed' event. Once
-         * destroyed, a marker cannot be restored by undo/redo operations. 
+         * Destroys the decoration. 
          */
         destroy(): void;
         /**
-         * Creates and returns a new {Marker} with the same properties as this
-         * marker.
-         * @param {Object} {Object} 
-         */
-        copy(properties: Object): void;
-        /**
-         * Invoke the given callback when the state of the marker changes.
-         * @param {Function} {Function} to be called when the marker changes.
-         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
-         */
-        onDidChange(callback: Function): Disposable;
-        /**
-         * Invoke the given callback when the marker is destroyed.
-         * @param {Function} {Function} to be called when the marker is destroyed.
-         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
-         */
-        onDidDestroy(callback: Function): Disposable;
-        /**
-         * @returns {boolean} Returns a {Boolean} indicating whether the marker is valid. Markers can be
-        invalidated when a region surrounding them in the buffer is changed.
-         */
-        isValid(): boolean;
-        /**
-         * @returns {boolean} Returns a {Boolean} indicating whether the marker has been destroyed. A marker
-        can be invalid without being destroyed, in which case undoing the invalidating
-        operation would restore the marker. Once a marker is destroyed by calling
-        {Marker::destroy}, no undo/redo operation can ever bring it back.
+         * Determine whether this decoration is destroyed.
+         * @returns {boolean} Returns a {Boolean}.
          */
         isDestroyed(): boolean;
         /**
-         * @returns {boolean} Returns a {Boolean} indicating whether the head precedes the tail.
-         */
-        isReversed(): boolean;
-        /**
-         * Get the invalidation strategy for this marker.
-         * 
-         * Valid values include: `never`, `surround`, `overlap`, `inside`, and `touch`.
-         * @returns {string} Returns a {String}.
-         */
-        getInvalidationStrategy(): string;
-        /**
-         * @returns {Object} Returns an {Object} containing any custom properties associated with
-        the marker.
+         * Get this decoration's properties.
+         * @returns {Object} Returns an {Object}.
          */
         getProperties(): Object;
         /**
-         * Merges an {Object} containing new properties into the marker's
-         * existing properties.
-         * @param {Object} {Object} 
+         * Set this decoration's properties.
+         * @param  See {TextEditor::decorateMarker} for more information on the properties. The `type` of `gutter` and `overlay` are not supported on layer decorations. 
          */
-        setProperties(properties: Object): void;
+        setProperties(newProperties: any): void;
         /**
-         * @param {Marker} {Marker} other marker 
-         * @returns {boolean} Returns a {Boolean} indicating whether this marker is equivalent to
-        another marker, meaning they have the same range and options.
+         * Override the decoration properties for a specific marker.
+         * @param {DisplayMarker} The {DisplayMarker} or {Marker} for which to override properties.
+         * @param {Object} An {Object} containing properties to apply to this marker. Pass `null` to clear the override. 
          */
-        isEqual(other: Marker): boolean;
+        setPropertiesForMarker(marker: DisplayMarker, properties: Object): void;
+    }
+
+    /**
+     * *Experimental:* A container for a related set of markers.
+     * 
+     * This API is experimental and subject to change on any release. 
+     *
+     * file: src/marker-layer.coffee
+     * srcUrl: https://github.com/atom/text-buffer/blob/v10.3.12/src/marker-layer.coffee#L15
+     */
+    class MarkerLayer { 
         /**
-         * Compares this marker to another based on their ranges.
-         * @param {Marker} {Marker}
-         * @returns {number} Returns a {Number}
+         * Create a copy of this layer with markers in the same state and
+         * locations. 
          */
-        compare(other: Marker): number;
+        copy(): void;
         /**
-         * Gets the buffer range of the display marker.
-         * @returns {Range} Returns a {Range}.
+         * Destroy this layer. 
          */
-        getBufferRange(): Range;
+        destroy(): void;
         /**
-         * Modifies the buffer range of the display marker.
-         * @param {Range} The new {Range} to use
-         * @param {Object} {Object} properties to associate with the marker.
+         * Remove all markers from this layer. 
          */
-        setBufferRange(bufferRange: Range, properties?: Object): void;
+        clear(): void;
         /**
-         * Gets the screen range of the display marker.
-         * @returns {Range} Returns a {Range}.
+         * Determine whether this layer has been destroyed. 
          */
-        getScreenRange(): Range;
+        isDestroyed(): void;
         /**
-         * Modifies the screen range of the display marker.
-         * @param {Range} The new {Range} to use
-         * @param {Object} {Object} properties to associate with the marker.
+         * Get an existing marker by its id.
+         * @returns {Marker} Returns a {Marker}.
          */
-        setScreenRange(screenRange: Range, properties?: Object): void;
+        getMarker(): Marker;
         /**
-         * Retrieves the buffer position of the marker's start. This will always be
-         * less than or equal to the result of {Marker::getEndBufferPosition}.
-         * @returns {Point} Returns a {Point}.
+         * Get all existing markers on the marker layer.
+         * @returns {any[]} Returns an {Array} of {Marker}s.
          */
-        getStartBufferPosition(): Point;
+        getMarkers(): any[];
         /**
-         * Retrieves the screen position of the marker's start. This will always be
-         * less than or equal to the result of {Marker::getEndScreenPosition}.
-         * @returns {Point} Returns a {Point}.
+         * Get the number of markers in the marker layer.
+         * @returns {number} Returns a {Number}.
          */
-        getStartScreenPosition(): Point;
+        getMarkerCount(): number;
         /**
-         * Retrieves the buffer position of the marker's end. This will always be
-         * greater than or equal to the result of {Marker::getStartBufferPosition}.
-         * @returns {Point} Returns a {Point}.
+         * Find markers in the layer conforming to the given parameters.
+         * 
+         * See the documentation for {TextBuffer::findMarkers}. 
          */
-        getEndBufferPosition(): Point;
+        findMarkers(): void;
         /**
-         * Retrieves the screen position of the marker's end. This will always be
-         * greater than or equal to the result of {Marker::getStartScreenPosition}.
-         * @returns {Point} Returns a {Point}.
+         * Create a marker with the given range.
+         * @param {Range} A {Range} or range-compatible {Array}
+         * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
+         * @returns {Marker} Returns a {Marker}.
          */
-        getEndScreenPosition(): Point;
+        markRange(range: Range, options: any): Marker;
         /**
-         * Retrieves the buffer position of the marker's head.
-         * @returns {Point} Returns a {Point}.
+         * Create a marker at with its head at the given position with no tail.
+         * @param {Point} {Point} or point-compatible {Array}
+         * @param {Object} An {Object} with the following keys:
+         * @returns {Marker} Returns a {Marker}.
          */
-        getHeadBufferPosition(): Point;
+        markPosition(position: Point, options?: Object): Marker;
         /**
-         * Sets the buffer position of the marker's head.
-         * @param {Point} The new {Point} to use
-         * @param {Object} {Object} properties to associate with the marker. 
+         * Subscribe to be notified asynchronously whenever markers are
+         * created, updated, or destroyed on this layer. *Prefer this method for
+         * optimal performance when interacting with layers that could contain large
+         * numbers of markers.*
+         * 
+         * Subscribers are notified once, asynchronously when any number of changes
+         * occur in a given tick of the event loop. You should re-query the layer
+         * to determine the state of markers in which you're interested in. It may
+         * be counter-intuitive, but this is much more efficient than subscribing to
+         * events on individual markers, which are expensive to deliver.
+         * @param {Function} A {Function} that will be called with no arguments when changes occur on this layer.
+         * @returns {Disposable} Returns a {Disposable}.
          */
-        setHeadBufferPosition(bufferPosition: Point, properties?: Object): void;
+        onDidUpdate(callback: Function): Disposable;
         /**
-         * Retrieves the screen position of the marker's head.
-         * @returns {Point} Returns a {Point}.
+         * Subscribe to be notified synchronously whenever markers are created
+         * on this layer. *Avoid this method for optimal performance when interacting
+         * with layers that could contain large numbers of markers.*
+         * 
+         * You should prefer {onDidUpdate} when synchronous notifications aren't
+         * absolutely necessary.
+         * @param {Function} A {Function} that will be called with a {Marker} whenever a new marker is created.
+         * @returns {Disposable} Returns a {Disposable}.
          */
-        getHeadScreenPosition(): Point;
+        onDidCreateMarker(callback: Function): Disposable;
         /**
-         * Sets the screen position of the marker's head.
-         * @param {Point} The new {Point} to use
-         * @param {Object} {Object} properties to associate with the marker. 
+         * Subscribe to be notified synchronously when this layer is destroyed.
+         * @returns {Disposable} Returns a {Disposable}.
          */
-        setHeadScreenPosition(screenPosition: Point, properties?: Object): void;
-        /**
-         * Retrieves the buffer position of the marker's tail.
-         * @returns {Point} Returns a {Point}.
-         */
-        getTailBufferPosition(): Point;
-        /**
-         * Sets the buffer position of the marker's tail.
-         * @param {Point} The new {Point} to use
-         * @param {Object} {Object} properties to associate with the marker. 
-         */
-        setTailBufferPosition(bufferPosition: Point, properties?: Object): void;
-        /**
-         * Retrieves the screen position of the marker's tail.
-         * @returns {Point} Returns a {Point}.
-         */
-        getTailScreenPosition(): Point;
-        /**
-         * Sets the screen position of the marker's tail.
-         * @param {Point} The new {Point} to use
-         * @param {Object} {Object} properties to associate with the marker. 
-         */
-        setTailScreenPosition(screenPosition: Point, properties?: Object): void;
-        /**
-         * @returns {boolean} Returns a {Boolean} indicating whether the marker has a tail.
-         */
-        hasTail(): boolean;
-        /**
-         * Plants the marker's tail at the current head position. After calling
-         * the marker's tail position will be its head position at the time of the
-         * call, regardless of where the marker's head is moved.
-         * @param {Object} {Object} properties to associate with the marker. 
-         */
-        plantTail(properties?: Object): void;
-        /**
-         * Removes the marker's tail. After calling the marker's head position
-         * will be reported as its current tail position until the tail is planted
-         * again.
-         * @param {Object} {Object} properties to associate with the marker. 
-         */
-        clearTail(properties?: Object): void;
+        onDidDestroy(): Disposable;
     }
 
     /**
@@ -2455,7 +2988,7 @@ declare module AtomTypes {
      * See {::add} for more info about adding menu's directly. 
      *
      * file: src/menu-manager.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/menu-manager.coffee#L61
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/menu-manager.coffee#L61
      */
     class MenuManager { 
         /**
@@ -2469,6 +3002,131 @@ declare module AtomTypes {
          * Refreshes the currently visible menu. 
          */
         update(): void;
+    }
+
+    /**
+     * A notification to the user containing a message and type. 
+     *
+     * file: src/notification.coffee
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/notification.coffee#L6
+     */
+    class Notification { 
+        /**
+         * Invoke the given callback when the notification is dismissed.
+         * @param {Function} {Function} to be called when the notification is dismissed.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidDismiss(callback: Function): Disposable;
+        /**
+         * Invoke the given callback when the notification is displayed.
+         * @param {Function} {Function} to be called when the notification is displayed.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidDisplay(callback: Function): Disposable;
+        /**
+         * @returns {string} Returns the {String} type.
+         */
+        getType(): string;
+        /**
+         * @returns {string} Returns the {String} message.
+         */
+        getMessage(): string;
+        /**
+         * Dismisses the notification, removing it from the UI. Calling this programmatically
+         * will call all callbacks added via `onDidDismiss`. 
+         */
+        dismiss(): void;
+    }
+
+    /**
+     * A notification manager used to create {Notification}s to be shown
+     * to the user.
+     * 
+     * An instance of this class is always available as the `atom.notifications`
+     * global. 
+     *
+     * file: src/notification-manager.coffee
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/notification-manager.coffee#L10
+     */
+    class NotificationManager { 
+        /**
+         * Invoke the given callback after a notification has been added.
+         * @param {Function} {Function} to be called after the notification is added.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidAddNotification(callback: Function): Disposable;
+        /**
+         * Add a success notification.
+         * @param {string} A {String} message
+         * @param {Object} An options {Object} with the following keys:
+         */
+        addSuccess(message: string, options?: Object): void;
+        /**
+         * Add an informational notification.
+         * @param {string} A {String} message
+         * @param {Object} An options {Object} with the following keys:
+         */
+        addInfo(message: string, options?: Object): void;
+        /**
+         * Add a warning notification.
+         * @param {string} A {String} message
+         * @param {Object} An options {Object} with the following keys:
+         */
+        addWarning(message: string, options?: Object): void;
+        /**
+         * Add an error notification.
+         * @param {string} A {String} message
+         * @param {Object} An options {Object} with the following keys:
+         */
+        addError(message: string, options?: Object): void;
+        /**
+         * Add a fatal error notification.
+         * @param {string} A {String} message
+         * @param {Object} An options {Object} with the following keys:
+         */
+        addFatalError(message: string, options?: Object): void;
+        /**
+         * Get all the notifications.
+         * @returns {any[]} Returns an {Array} of {Notification}s.
+         */
+        getNotifications(): any[];
+    }
+
+    /**
+     * Loads and activates a package's main module and resources such as
+     * stylesheets, keymaps, grammar, editor properties, and menus. 
+     *
+     * file: src/package.coffee
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/package.coffee#L17
+     */
+    class Package { 
+        /**
+         * Invoke the given callback when all packages have been activated.
+         * @param {Function} {Function}
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidDeactivate(callback: Function): Disposable;
+        /**
+         * Are all native modules depended on by this package correctly
+         * compiled against the current version of Atom?
+         * 
+         * Incompatible packages cannot be activated.
+         * @returns {boolean} Returns a {Boolean}, true if compatible, false if incompatible.
+         */
+        isCompatible(): boolean;
+        /**
+         * Rebuild native modules in this package's dependencies for the
+         * current version of Atom.
+         * @returns {Promise<any>} Returns a {Promise} that resolves with an object containing `code`,
+        `stdout`, and `stderr` properties based on the results of running
+        `apm rebuild` on the package.
+         */
+        rebuild(): Promise<any>;
+        /**
+         * If a previous rebuild failed, get the contents of stderr.
+         * @returns {string} Returns a {String} or null if no previous build failure occurred.
+         */
+        getBuildFailureOutput(): string;
     }
 
     /**
@@ -2490,7 +3148,7 @@ declare module AtomTypes {
      * settings and also by calling `enablePackage()/disablePackage()`. 
      *
      * file: src/package-manager.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/package-manager.coffee#L29
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/package-manager.coffee#L30
      */
     class PackageManager { 
         /**
@@ -2532,6 +3190,8 @@ declare module AtomTypes {
         /**
          * Get the path to the apm command.
          * 
+         * Uses the value of the `core.apmPath` config setting if it exists.
+         * 
          * Return a {String} file path to apm. 
          */
         getApmPath(): void;
@@ -2555,14 +3215,16 @@ declare module AtomTypes {
         isBundledPackage(name: string): boolean;
         /**
          * Enable the package with the given name.
+         * @param {string} The {String} package name.
          * @returns {Package} Returns the {Package} that was enabled or null if it isn't loaded.
          */
-        enablePackage(): Package;
+        enablePackage(name: string): Package;
         /**
          * Disable the package with the given name.
+         * @param {string} The {String} package name.
          * @returns {Package} Returns the {Package} that was disabled or null if it isn't loaded.
          */
-        disablePackage(): Package;
+        disablePackage(name: string): Package;
         /**
          * Is the package with the given name disabled?
          * @param {string} The {String} package name.
@@ -2586,6 +3248,10 @@ declare module AtomTypes {
          */
         isPackageActive(name: string): boolean;
         /**
+         * @returns {boolean} Returns a {Boolean} indicating whether package activation has occurred.
+         */
+        hasActivatedInitialPackages(): boolean;
+        /**
          * Get an {Array} of all the loaded {Package}s 
          */
         getLoadedPackages(): void;
@@ -2602,40 +3268,51 @@ declare module AtomTypes {
          */
         isPackageLoaded(name: string): boolean;
         /**
-         * Get an {Array} of {String}s of all the available package paths. 
+         * @returns {boolean} Returns a {Boolean} indicating whether package loading has occurred.
          */
-        getAvailablePackagePaths(): void;
+        hasLoadedInitialPackages(): boolean;
         /**
-         * Get an {Array} of {String}s of all the available package names. 
+         * @returns {any[]} Returns an {Array} of {String}s of all the available package paths.
          */
-        getAvailablePackageNames(): void;
+        getAvailablePackagePaths(): any[];
         /**
-         * Get an {Array} of {String}s of all the available package metadata. 
+         * @returns {any[]} Returns an {Array} of {String}s of all the available package names.
          */
-        getAvailablePackageMetadata(): void;
+        getAvailablePackageNames(): any[];
+        /**
+         * @returns {any[]} Returns an {Array} of {String}s of all the available package metadata.
+         */
+        getAvailablePackageMetadata(): any[];
     }
 
     /**
      * A container for presenting content in the center of the workspace.
      * Panes can contain multiple items, one of which is *active* at a given time.
      * The view corresponding to the active item is displayed in the interface. In
-     * the default configuration, tabs are also displayed for each item. 
+     * the default configuration, tabs are also displayed for each item.
+     * 
+     * Each pane may also contain one *pending* item. When a pending item is added
+     * to a pane, it will replace the currently pending item, if any, instead of
+     * simply being added. In the default configuration, the text in the tab for
+     * pending items is shown in italics. 
      *
      * file: src/pane.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/pane.coffee#L14
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/pane.coffee#L18
      */
     class Pane { 
         /**
-         * Invoke the given callback when the pane resize
+         * Invoke the given callback when the pane resizes
          * 
-         * the callback will be invoked when pane's flexScale property changes
+         * The callback will be invoked when pane's flexScale property changes.
+         * Use {::getFlexScale} to get the current value.
          * @param {Function} {Function} to be called when the pane is resized
          * @returns {Disposable} Returns a {Disposable} on which '.dispose()' can be called to unsubscribe.
          */
         onDidChangeFlexScale(callback: Function): Disposable;
         /**
-         * Invoke the given callback with all current and future items.
-         * @param {Function} {Function} to be called with current and future items.
+         * Invoke the given callback with the current and future values of
+         * {::getFlexScale}.
+         * @param {Function} {Function} to be called with the current and future values of the {::getFlexScale} property.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
         observeFlexScale(callback: Function): Disposable;
@@ -2648,6 +3325,12 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
         onDidActivate(callback: Function): Disposable;
+        /**
+         * Invoke the given callback before the pane is destroyed.
+         * @param {Function} {Function} to be called before the pane is destroyed.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onWillDestroy(callback: Function): Disposable;
         /**
          * Invoke the given callback when the pane is destroyed.
          * @param {Function} {Function} to be called when the pane is destroyed.
@@ -2681,6 +3364,11 @@ declare module AtomTypes {
          */
         onDidRemoveItem(callback: Function): Disposable;
         /**
+         * Invoke the given callback before an item is removed from the pane.
+         * @param {Function} {Function} to be called with when items are removed.
+         */
+        onWillRemoveItem(callback: Function): void;
+        /**
          * Invoke the given callback when an item is moved within the pane.
          * @param {Function} {Function} to be called with when items are moved.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
@@ -2699,6 +3387,31 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
         onDidChangeActiveItem(callback: Function): Disposable;
+        /**
+         * Invoke the given callback when {::activateNextRecentlyUsedItem}
+         * has been called, either initiating or continuing a forward MRU traversal of
+         * pane items.
+         * @param {Function} {Function} to be called with when the active item changes.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onChooseNextMRUItem(callback: Function): Disposable;
+        /**
+         * Invoke the given callback when {::activatePreviousRecentlyUsedItem}
+         * has been called, either initiating or continuing a reverse MRU traversal of
+         * pane items.
+         * @param {Function} {Function} to be called with when the active item changes.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onChooseLastMRUItem(callback: Function): Disposable;
+        /**
+         * Invoke the given callback when {::moveActiveItemToTopOfStack}
+         * has been called, terminating an MRU traversal of pane items and moving the
+         * current active item to the top of the stack. Typically bound to a modifier
+         * (e.g. CTRL) key up event.
+         * @param {Function} {Function} to be called with when the MRU traversal is done.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDoneChoosingMRUItem(callback: Function): Disposable;
         /**
          * Invoke the given callback with the current and future values of
          * {::getActiveItem}.
@@ -2757,16 +3470,17 @@ declare module AtomTypes {
         activateItemAtIndex(index: number): void;
         /**
          * Make the given item *active*, causing it to be displayed by
-         * the pane's view. 
+         * the pane's view.
+         * @param {Object} {Object}
          */
-        activateItem(): void;
+        activateItem(options?: Object): void;
         /**
          * Add the given item to the pane.
          * @param  The item to add. It can be a model with an associated view or a view.
-         * @param {number} {Number} indicating the index at which to add the item. If omitted, the item is added after the current active item.
+         * @param {Object} {Object}
          * @returns  Returns the added item.
          */
-        addItem(item: any, index?: number): any;
+        addItem(item: any, options?: Object): any;
         /**
          * Add the given items to the pane.
          * @param {any[]} An {Array} of items to add. Items can be views or models with associated views. Any objects that are already present in the pane's current items will not be added again.
@@ -2821,14 +3535,14 @@ declare module AtomTypes {
         /**
          * Save the given item.
          * @param  The item to save.
-         * @param {Function} {Function} which will be called after the item is successfully saved. 
+         * @param {Function} {Function} which will be called with no argument after the item is successfully saved, or with the error if it failed. The return value will be that of `nextAction` or `undefined` if it was not provided 
          */
         saveItem(item: any, nextAction?: Function): void;
         /**
          * Prompt the user for a location and save the active item with the
          * path they select.
          * @param  The item to save.
-         * @param {Function} {Function} which will be called after the item is successfully saved. 
+         * @param {Function} {Function} which will be called with no argument after the item is successfully saved, or with the error if it failed. The return value will be that of `nextAction` or `undefined` if it was not provided 
          */
         saveItemAs(item: any, nextAction?: Function): void;
         /**
@@ -2843,9 +3557,10 @@ declare module AtomTypes {
         itemForURI(uri: string): void;
         /**
          * Activate the first item that matches the given URI.
+         * @param {string} {String} containing a URI.
          * @returns {boolean} Returns a {Boolean} indicating whether an item matching the URI was found.
          */
-        activateItemForURI(): boolean;
+        activateItemForURI(uri: string): boolean;
         /**
          * Determine whether the pane is active.
          * @returns {boolean} Returns a {Boolean}.
@@ -2899,7 +3614,7 @@ declare module AtomTypes {
      * panels. 
      *
      * file: src/panel.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/panel.coffee#L12
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/panel.coffee#L12
      */
     class Panel { 
         /**
@@ -2953,22 +3668,33 @@ declare module AtomTypes {
      * ```
      *
      * file: src/point.coffee
-     * srcUrl: https://github.com/atom/text-buffer/blob/v5.2.0/src/point.coffee#L14
+     * srcUrl: https://github.com/atom/text-buffer/blob/v10.3.12/src/point.coffee#L12
      */
     class Point { 
         /**
-         * Convert any point-compatible object to a {Point}.
-         * @param {Point} This can be an object that's already a {Point}, in which case it's simply returned, or an array containing two {Number}s representing the row and column.
-         * @param  An optional boolean indicating whether to force the copying of objects that are already points.
-         * @returns {Point} Returns: A {Point} based on the given object.
+         * A zero-indexed {Number} representing the row of the {Point}. 
          */
-        static fromObject(object: Point, copy: any): Point;
+        row: Number
+    } representing the row of the {Point;
         /**
-         * @param {Point} {Point}
-         * @param {Point} {Point} 
-         * @returns {Point} Returns the given {Point} that is earlier in the buffer.
+         * A zero-indexed {Number} representing the column of the {Point}. 
          */
-        static min(point1: Point, point2: Point): Point;
+        column: Number
+    } representing the column of the {Point;
+
+/**
+ * Convert any point-compatible object to a {Point}.
+ * @param {Point} This can be an object that's already a {Point}, in which case it's simply returned, or an array containing two {Number}s representing the row and column.
+ * @param  An optional boolean indicating whether to force the copying of objects that are already points.
+ * @returns {Point} Returns: A {Point} based on the given object.
+ */
+	static fromObject(object: Point, copy: any): Point;
+/**
+ * @param {Point} {Point}
+ * @param {Point} {Point} 
+ * @returns {Point} Returns the given {Point} that is earlier in the buffer.
+ */
+	static min(point1: Point, point2: Point): Point;
 
         /**
          * Construct a {Point} object
@@ -3066,7 +3792,7 @@ declare module AtomTypes {
      * An instance of this class is always available as the `atom.project` global. 
      *
      * file: src/project.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/project.coffee#L23
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/project.coffee#L16
      */
     class Project { 
         /**
@@ -3076,6 +3802,20 @@ declare module AtomTypes {
          */
         onDidChangePaths(callback: Function): Disposable;
         /**
+         * Invoke the given callback when a text buffer is added to the
+         * project.
+         * @param {Function} {Function} to be called when a text buffer is added.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidAddBuffer(callback: Function): Disposable;
+        /**
+         * Invoke the given callback with all current and future text
+         * buffers in the project.
+         * @param {Function} {Function} to be called with current and future text buffers.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        observeBuffers(callback: Function): Disposable;
+        /**
          * Get an {Array} of {GitRepository}s associated with the project's
          * directories.
          * 
@@ -3084,8 +3824,8 @@ declare module AtomTypes {
          * {Array} of {Repository} objects:
          * 
          * ```
-         * Promise.all(project.getDirectories().map(
-         *     project.repositoryForDirectory.bind(project)))
+         * Promise.all(atom.project.getDirectories().map(
+         *     atom.project.repositoryForDirectory.bind(atom.project)))
          * ```
          */
         getRepositories(): void;
@@ -3154,21 +3894,32 @@ declare module AtomTypes {
      * arrays. So the following are equivalent:
      *
      * file: src/range.coffee
-     * srcUrl: https://github.com/atom/text-buffer/blob/v5.2.0/src/range.coffee#L19
+     * srcUrl: https://github.com/atom/text-buffer/blob/v10.3.12/src/range.coffee#L18
      */
     class Range { 
         /**
-         * Convert any range-compatible object to a {Range}.
-         * @param {Range} This can be an object that's already a {Range}, in which case it's simply returned, or an array containing two {Point}s or point-compatible arrays.
-         * @param  An optional boolean indicating whether to force the copying of objects that are already ranges.˚
-         * @returns {Range} Returns: A {Range} based on the given object.
+         * A {Point} representing the start of the {Range}. 
          */
-        static fromObject(object: Range, copy: any): Range;
+        start: Point
+    } representing the start of the {Range;
         /**
-         * Call this with the result of {Range::serialize} to construct a new Range.
-         * @param {any[]} {array} of params to pass to the {::constructor} 
+         * A {Point} representing the end of the {Range}. 
          */
-        static deserialize(array: any[]): void;
+        end: Point
+    } representing the end of the {Range;
+
+/**
+ * Convert any range-compatible object to a {Range}.
+ * @param {Range} This can be an object that's already a {Range}, in which case it's simply returned, or an array containing two {Point}s or point-compatible arrays.
+ * @param  An optional boolean indicating whether to force the copying of objects that are already ranges.˚
+ * @returns {Range} Returns: A {Range} based on the given object.
+ */
+	static fromObject(object: Range, copy: any): Range;
+/**
+ * Call this with the result of {Range::serialize} to construct a new Range.
+ * @param {any[]} {Array} of params to pass to the {::constructor} 
+ */
+	static deserialize(array: any[]): void;
 
         /**
          * Construct a {Range} object
@@ -3225,7 +3976,7 @@ declare module AtomTypes {
          * @param {Point} A {Point} to by which to translate the end of this range. If omitted, the `startDelta` will be used instead.
          * @returns {Range} Returns a {Range}.
          */
-        translate(startDelta: Point, endDelta?: Point): Range;
+        translate(startDelta: Point, endDelta ?: Point): Range;
         /**
          * Build and return a new range by traversing this range's start and
          * end points by the given delta.
@@ -3261,7 +4012,7 @@ declare module AtomTypes {
          * @param {boolean} {Boolean} indicating whether to exclude endpoints   when testing for intersection. Defaults to `false`.
          * @returns {boolean} Returns a {Boolean}.
          */
-        intersectsWith(otherRange: Range, exclusive?: boolean): boolean;
+        intersectsWith(otherRange: Range, exclusive ?: boolean): boolean;
         /**
          * @param {Range} A {Range} or range-compatible {Array}
          * @param  A boolean value including that the containment should be exclusive of endpoints. Defaults to false. 
@@ -3313,11 +4064,11 @@ declare module AtomTypes {
      *   specific position in the buffer.
      * * {Cursor::getScopeDescriptor} to get a cursor's descriptor based on position.
      * 
-     * See the [scopes and scope descriptor guide](https://atom.io/docs/latest/behind-atom-scoped-settings-scopes-and-scope-descriptors)
+     * See the [scopes and scope descriptor guide](http://flight-manual.atom.io/behind-atom/sections/scoped-settings-scopes-and-scope-descriptors/)
      * for more information. 
      *
      * file: src/scope-descriptor.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/scope-descriptor.coffee#L21
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/scope-descriptor.coffee#L21
      */
     class ScopeDescriptor { 
         /**
@@ -3335,7 +4086,7 @@ declare module AtomTypes {
      * Represents a selection in the {TextEditor}. 
      *
      * file: src/selection.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/selection.coffee#L11
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/selection.coffee#L10
      */
     class Selection { 
         /**
@@ -3369,7 +4120,7 @@ declare module AtomTypes {
          * @param {Range} The new {Range} to select.
          * @param {Object} {Object} with the keys:
          */
-        setBufferRange(screenRange: Range, options?: Object): void;
+        setBufferRange(bufferRange: Range, options?: Object): void;
         /**
          * @returns  Returns the starting and ending buffer rows the selection is
         highlighting.
@@ -3470,9 +4221,14 @@ declare module AtomTypes {
         selectToFirstCharacterOfLine(): void;
         /**
          * Selects all the text from the current cursor position to the end of
-         * the line. 
+         * the screen line. 
          */
         selectToEndOfLine(): void;
+        /**
+         * Selects all the text from the current cursor position to the end of
+         * the buffer line. 
+         */
+        selectToEndOfBufferLine(): void;
         /**
          * Selects all the text from the current cursor position to the
          * beginning of the word. 
@@ -3496,6 +4252,14 @@ declare module AtomTypes {
          * Selects text to the next word boundary. 
          */
         selectToNextWordBoundary(): void;
+        /**
+         * Selects text to the previous subword boundary. 
+         */
+        selectToPreviousSubwordBoundary(): void;
+        /**
+         * Selects text to the next subword boundary. 
+         */
+        selectToNextSubwordBoundary(): void;
         /**
          * Selects all the text from the current cursor position to the
          * beginning of the next paragraph. 
@@ -3540,6 +4304,18 @@ declare module AtomTypes {
          */
         backspace(): void;
         /**
+         * Removes the selection or, if nothing is selected, then all
+         * characters from the start of the selection back to the previous word
+         * boundary. 
+         */
+        deleteToPreviousWordBoundary(): void;
+        /**
+         * Removes the selection or, if nothing is selected, then all
+         * characters from the start of the selection up to the next word
+         * boundary. 
+         */
+        deleteToNextWordBoundary(): void;
+        /**
          * Removes from the start of the selection to the beginning of the
          * current word if the selection is empty otherwise it deletes the selection. 
          */
@@ -3566,6 +4342,16 @@ declare module AtomTypes {
          * selection to the end of the current word if nothing is selected. 
          */
         deleteToEndOfWord(): void;
+        /**
+         * Removes the selection or all characters from the start of the
+         * selection to the end of the current word if nothing is selected. 
+         */
+        deleteToBeginningOfSubword(): void;
+        /**
+         * Removes the selection or all characters from the start of the
+         * selection to the end of the current word if nothing is selected. 
+         */
+        deleteToEndOfSubword(): void;
         /**
          * Removes only the selected text. 
          */
@@ -3600,9 +4386,13 @@ declare module AtomTypes {
          */
         toggleLineComments(): void;
         /**
-         * Cuts the selection until the end of the line. 
+         * Cuts the selection until the end of the screen line. 
          */
         cutToEndOfLine(): void;
+        /**
+         * Cuts the selection until the end of the buffer line. 
+         */
+        cutToEndOfBufferLine(): void;
         /**
          * Copies the selection to the clipboard and then deletes it.
          * @param {boolean} {Boolean} (default: false) See {::copy}
@@ -3653,42 +4443,52 @@ declare module AtomTypes {
      * which you can use to globally query and observe the set of active style
      * sheets. The `StyleManager` doesn't add any style elements to the DOM on its
      * own, but is instead subscribed to by individual `<atom-styles>` elements,
-     * which clone and attach style elements in different contexts. 
+     * which clone and attach style elements in different contexts.
      *
-     * file: src/style-manager.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/style-manager.coffee#L11
+     * file: src/style-manager.js
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/style-manager.js#L15
      */
     class StyleManager { 
         /**
          * Invoke `callback` for all current and future style elements.
          * @param {Function} {Function} that is called with style elements.
+         * @param  An `HTMLStyleElement` instance. The `.sheet` property will be null because this element isn't attached to the DOM. If you want to attach this element to the DOM, be sure to clone it first by calling `.cloneNode(true)` on it. The style element will also have the following non-standard properties:
+         * @param {string} A {String} containing the path from which the style element was loaded.
+         * @param {string} A {String} indicating the target context of the style element.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to cancel the
         subscription.
          */
-        observeStyleElements(callback: Function): Disposable;
+        observeStyleElements(callback: Function, styleElement: any, sourcePath: string, context: string): Disposable;
         /**
          * Invoke `callback` when a style element is added.
          * @param {Function} {Function} that is called with style elements.
+         * @param  An `HTMLStyleElement` instance. The `.sheet` property will be null because this element isn't attached to the DOM. If you want to attach this element to the DOM, be sure to clone it first by calling `.cloneNode(true)` on it. The style element will also have the following non-standard properties:
+         * @param {string} A {String} containing the path from which the style element was loaded.
+         * @param {string} A {String} indicating the target context of the style element.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to cancel the
         subscription.
          */
-        onDidAddStyleElement(callback: Function): Disposable;
+        onDidAddStyleElement(callback: Function, styleElement: any, sourcePath: string, context: string): Disposable;
         /**
          * Invoke `callback` when a style element is removed.
          * @param {Function} {Function} that is called with style elements.
+         * @param  An `HTMLStyleElement` instance.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to cancel the
         subscription.
          */
-        onDidRemoveStyleElement(callback: Function): Disposable;
+        onDidRemoveStyleElement(callback: Function, styleElement: any): Disposable;
         /**
          * Invoke `callback` when an existing style element is updated.
          * @param {Function} {Function} that is called with style elements.
+         * @param  An `HTMLStyleElement` instance. The `.sheet` property will be null because this element isn't attached to the DOM. The style element will also have the following non-standard properties:
+         * @param {string} A {String} containing the path from which the style element was loaded.
+         * @param {string} A {String} indicating the target context of the style element.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to cancel the
         subscription.
          */
-        onDidUpdateStyleElement(callback: Function): Disposable;
+        onDidUpdateStyleElement(callback: Function, styleElement: any, sourcePath: string, context: string): Disposable;
         /**
-         * Get all loaded style elements. 
+         * Get all loaded style elements.
          */
         getStyleElements(): void;
         /**
@@ -3707,7 +4507,7 @@ declare module AtomTypes {
      * and the [instantiation of the task](https://github.com/atom/atom/blob/4a20f13162f65afc816b512ad7201e528c3443d7/src/project.coffee#L245).
      *
      * file: src/task.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/task.coffee#L40
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/task.coffee#L40
      */
     class Task { 
         /**
@@ -3748,6 +4548,13 @@ declare module AtomTypes {
          */
         on(eventName: string, callback: Function): Disposable;
         /**
+         * A helper method to easily launch and run a task once.
+         * @param {string} The {String} path to the CoffeeScript/JavaScript file which exports a single {Function} to execute.
+         * @param  The arguments to pass to the exported function.
+         * @returns {Task} Returns the created {Task}.
+         */
+        once(taskPath: string, args: any): Task;
+        /**
          * Forcefully stop the running task.
          * 
          * No more events are emitted once this method is called. 
@@ -3760,7 +4567,7 @@ declare module AtomTypes {
      * annotate logical regions in the text. 
      *
      * file: src/text-buffer.coffee
-     * srcUrl: https://github.com/atom/text-buffer/blob/v5.2.0/src/text-buffer.coffee#L20
+     * srcUrl: https://github.com/atom/text-buffer/blob/v10.3.12/src/text-buffer.coffee#L23
      */
     class TextBuffer { 
         /**
@@ -3809,7 +4616,7 @@ declare module AtomTypes {
          */
         onDidConflict(callback: Function): Disposable;
         /**
-         * Invoke the given callback the value of {::isModified} changes.
+         * Invoke the given callback if the value of {::isModified} changes.
          * @param {Function} {Function} to be called when {::isModified} changes.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
@@ -4065,35 +4872,58 @@ declare module AtomTypes {
          */
         deleteRows(startRow: number, endRow: number): Range;
         /**
-         * Create a marker with the given range. This marker will maintain
-         * its logical location as the buffer is changed, so if you mark a particular
-         * word, the marker will remain over that word even if the word's location in
-         * the buffer changes.
+         * Create a layer to contain a set of related markers.
+         * @param  An object contaning the following keys:
+         * @returns {MarkerLayer} Returns a {MarkerLayer}.
+         */
+        addMarkerLayer(options: any): MarkerLayer;
+        /**
+         * Get a {MarkerLayer} by id.
+         * @param  The id of the marker layer to retrieve.
+         * @returns {MarkerLayer} Returns a {MarkerLayer} or `` if no layer exists with the given
+        id.
+         */
+        getMarkerLayer(id: any): MarkerLayer;
+        /**
+         * Get the default {MarkerLayer}.
+         * 
+         * All marker APIs not tied to an explicit layer interact with this default
+         * layer.
+         * @returns {MarkerLayer} Returns a {MarkerLayer}.
+         */
+        getDefaultMarkerLayer(): MarkerLayer;
+        /**
+         * Create a marker with the given range in the default marker layer.
+         * This marker will maintain its logical location as the buffer is changed, so
+         * if you mark a particular word, the marker will remain over that word even if
+         * the word's location in the buffer changes.
          * @param {Range} A {Range} or range-compatible {Array}
          * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
          * @returns {Marker} Returns a {Marker}.
          */
         markRange(range: Range, properties: any): Marker;
         /**
-         * Create a marker at the given position with no tail.
+         * Create a marker at the given position with no tail in the default
+         * marker layer.
          * @param {Point} {Point} or point-compatible {Array}
-         * @param  This is the same as the `properties` parameter in {::markRange}
+         * @param {Object} An {Object} with the following keys:
          * @returns {Marker} Returns a {Marker}.
          */
-        markPosition(position: Point, properties: any): Marker;
+        markPosition(position: Point, options?: Object): Marker;
         /**
-         * Get all existing markers on the buffer.
+         * Get all existing markers on the default marker layer.
          * @returns {any[]} Returns an {Array} of {Marker}s.
          */
         getMarkers(): any[];
         /**
-         * Get an existing marker by its id.
+         * Get an existing marker by its id from the default marker layer.
          * @param {number} {Number} id of the marker to retrieve
          * @returns {Marker} Returns a {Marker}.
          */
         getMarker(id: number): Marker;
         /**
-         * Find markers conforming to the given parameters.
+         * Find markers conforming to the given parameters in the default
+         * marker layer.
          * 
          * Markers are sorted based on their position in the buffer. If two markers
          * start at the same position, the larger marker comes first.
@@ -4102,7 +4932,7 @@ declare module AtomTypes {
          */
         findMarkers(params: any): any[];
         /**
-         * Get the number of markers in the buffer.
+         * Get the number of markers in the default marker layer.
          * @returns {number} Returns a {Number}.
          */
         getMarkerCount(): number;
@@ -4124,9 +4954,11 @@ declare module AtomTypes {
          * @param {number} The {Number} of milliseconds for which this transaction should be considered 'open for grouping' after it begins. If a transaction with a positive `groupingInterval` is committed while the previous transaction is still open for grouping, the two transactions are merged with respect to undo and redo.
          * @param {Function} A {Function} to call inside the transaction. 
          */
-        transact(groupingInterval?: number, fn?: Function): void;
+        transact(groupingInterval?: number, fn: Function): void;
         /**
-         * Clear the undo stack. 
+         * Clear the undo stack. When calling this method within a transaction,
+         * the {::onDidChangeText} event will not be triggered because the information
+         * describing the changes is lost. 
          */
         clearUndoStack(): void;
         /**
@@ -4156,6 +4988,20 @@ declare module AtomTypes {
          */
         groupChangesSinceCheckpoint(): boolean;
         /**
+         * 
+         * 
+         * If the given checkpoint is no longer present in the undo history, this
+         * method will return an empty {Array}.
+         * @returns  Returns a list of changes since the given checkpoint.
+         * @returns {any[]} Returns an {Array} containing the following change {Object}s:
+        
+        * `start` A {Point} representing where the change started.
+        * `oldExtent` A {Point} representing the replaced extent.
+        * `newExtent`: A {Point} representing the replacement extent.
+        * `newText`: A {String} representing the replacement text.
+         */
+        getChangesSinceCheckpoint(): any[];
+        /**
          * Scan regular expression matches in the entire buffer, calling the
          * given iterator function on each match.
          * 
@@ -4179,7 +5025,7 @@ declare module AtomTypes {
          * @param {Range} A {Range} in which to search.
          * @param {Function} A {Function} that's called on each match with an {Object} containing the following keys:
          */
-        scanInRange(regex: RegExp, range: Range, iterator: Function): void;
+        scanInRange(regex: RegExp, range: Range, callback: Function): void;
         /**
          * Scan regular expression matches in a given range in reverse order,
          * calling the given iterator function on each match.
@@ -4291,8 +5137,7 @@ declare module AtomTypes {
     /**
      * This class represents all essential editing state for a single
      * {TextBuffer}, including cursor and selection positions, folds, and soft wraps.
-     * If you're manipulating the state of an editor, use this class. If you're
-     * interested in the visual appearance of editors, use {TextEditorView} instead.
+     * If you're manipulating the state of an editor, use this class.
      * 
      * A single {TextBuffer} can belong to multiple editors. For example, if the
      * same file is open in two different panes, Atom creates a separate editor for
@@ -4330,7 +5175,7 @@ declare module AtomTypes {
      * soft wraps and folds to ensure your code interacts with them correctly. 
      *
      * file: src/text-editor.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/text-editor.coffee#L56
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/text-editor.coffee#L60
      */
     class TextEditor { 
         /**
@@ -4424,7 +5269,7 @@ declare module AtomTypes {
          */
         onWillInsertText(callback: Function): Disposable;
         /**
-         * Calls your `callback` adter text has been inserted.
+         * Calls your `callback` after text has been inserted.
          * @param {Function} {Function}
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
@@ -4509,6 +5354,25 @@ declare module AtomTypes {
          */
         getBuffer(): void;
         /**
+         * Calls your `callback` when a {Gutter} is added to the editor.
+         * Immediately calls your callback for each existing gutter.
+         * @param {Function} {Function}
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        observeGutters(callback: Function): Disposable;
+        /**
+         * Calls your `callback` when a {Gutter} is added to the editor.
+         * @param {Function} {Function}
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidAddGutter(callback: Function): Disposable;
+        /**
+         * Calls your `callback` when a {Gutter} is removed from the editor.
+         * @param {Function} {Function}
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidRemoveGutter(callback: Function): Disposable;
+        /**
          * Get the editor's title for display in other parts of the
          * UI such as the tabs.
          * 
@@ -4518,12 +5382,16 @@ declare module AtomTypes {
          */
         getTitle(): string;
         /**
-         * Get the editor's long title for display in other parts of the UI
-         * such as the window title.
+         * Get unique title for display in other parts of the UI, such as
+         * the window title.
          * 
-         * If the editor's buffer is saved, its long title is formatted as
-         * "<filename> - <directory>". If it is unsaved, its title is "untitled"
-         * @returns {string} Returns a {String}.
+         * If the editor's buffer is unsaved, its title is "untitled"
+         * If the editor's buffer is saved, its unique title is formatted as one
+         * of the following,
+         * 
+         * * "<filename>" when it is the only editing buffer with this file name.
+         * * "<filename> — <unique-dir-prefix>" when other buffers have this file name.
+         * @returns {string} Returns a {String}
          */
         getLongTitle(): string;
         /**
@@ -4610,9 +5478,10 @@ declare module AtomTypes {
          */
         getCurrentParagraphBufferRange(): Range;
         /**
-         * Replaces the entire contents of the buffer with the given {String}. 
+         * Replaces the entire contents of the buffer with the given {String}.
+         * @param {string} A {String} to replace with 
          */
-        setText(): void;
+        setText(text: string): void;
         /**
          * Set the text in the given {Range} in buffer coordinates.
          * @param {Range} A {Range} or range-compatible {Array}.
@@ -4626,7 +5495,7 @@ declare module AtomTypes {
          * @param {string} A {String} representing the text to insert.
          * @param  See {Selection::insertText}.
          * @returns {Range} Returns a {Range} when the text has been inserted
-         * @returns {boolean} Returns a {Bool} false when the text has not been inserted
+         * @returns {boolean} Returns a {Boolean} false when the text has not been inserted
          */
         insertText(text: string, options?: any): Range | boolean;
         /**
@@ -4693,6 +5562,28 @@ declare module AtomTypes {
          */
         deleteToBeginningOfWord(): void;
         /**
+         * Similar to {::deleteToBeginningOfWord}, but deletes only back to the
+         * previous word boundary. 
+         */
+        deleteToPreviousWordBoundary(): void;
+        /**
+         * Similar to {::deleteToEndOfWord}, but deletes only up to the
+         * next word boundary. 
+         */
+        deleteToNextWordBoundary(): void;
+        /**
+         * For each selection, if the selection is empty, delete all characters
+         * of the containing subword following the cursor. Otherwise delete the selected
+         * text. 
+         */
+        deleteToBeginningOfSubword(): void;
+        /**
+         * For each selection, if the selection is empty, delete all characters
+         * of the containing subword following the cursor. Otherwise delete the selected
+         * text. 
+         */
+        deleteToEndOfSubword(): void;
+        /**
          * For each selection, if the selection is empty, delete all characters
          * of the containing line that precede the cursor. Otherwise delete the
          * selected text. 
@@ -4733,7 +5624,7 @@ declare module AtomTypes {
          * @param {number} The {Number} of milliseconds for which this transaction should be considered 'groupable' after it begins. If a transaction with a positive `groupingInterval` is committed while the previous transaction is still 'groupable', the two transactions are merged with respect to undo and redo.
          * @param {Function} A {Function} to call inside the transaction. 
          */
-        transact(groupingInterval?: number, fn?: Function): void;
+        transact(groupingInterval?: number, fn: Function): void;
         /**
          * Abort an open transaction, undoing any operations performed so far
          * within the transaction. 
@@ -4831,19 +5722,20 @@ declare module AtomTypes {
          * Clip the start and end of the given range to valid positions on screen.
          * See {::clipScreenPosition} for more information.
          * @param {Range} The {Range} to clip.
-         * @param {Range} See {::clipScreenPosition} `options`. Returns a {Range}. 
+         * @param  See {::clipScreenPosition} `options`.
+         * @returns {Range} Returns a {Range}.
          */
-        clipScreenRange(range: Range, options?: Range): void;
+        clipScreenRange(range: Range, options?: any): Range;
         /**
-         * Adds a decoration that tracks a {Marker}. When the marker moves,
-         * is invalidated, or is destroyed, the decoration will be updated to reflect
-         * the marker's state.
+         * Add a decoration that tracks a {DisplayMarker}. When the
+         * marker moves, is invalidated, or is destroyed, the decoration will be
+         * updated to reflect the marker's state.
          * 
-         * There are three types of supported decorations:
+         * The following are the supported decorations types:
          * 
          * * __line__: Adds your CSS `class` to the line nodes within the range
          *     marked by the marker
-         * * __gutter__: Adds your CSS `class` to the line number nodes within the
+         * * __line-number__: Adds your CSS `class` to the line number nodes within the
          *     range marked by the marker
          * * __highlight__: Adds a new highlight div to the editor surrounding the
          *     range marked by the marker. When the user selects text, the selection is
@@ -4855,22 +5747,27 @@ declare module AtomTypes {
          *       <div class="region"></div>
          *     </div>
          *   ```
-         * @param {Marker} A {Marker} you want this decoration to follow.
+         * * __overlay__: Positions the view associated with the given item at the head
+         *     or tail of the given `DisplayMarker`.
+         * * __gutter__: A decoration that tracks a {DisplayMarker} in a {Gutter}. Gutter
+         *     decorations are created by calling {Gutter::decorateMarker} on the
+         *     desired `Gutter` instance.
+         * * __block__: Positions the view associated with the given item before or
+         *     after the row of the given `TextEditorMarker`.
+         * @param {DisplayMarker} A {DisplayMarker} you want this decoration to follow.
          * @param {Object} An {Object} representing the decoration e.g. `{type: 'line-number', class: 'linter-error'}`
          * @returns {Decoration} Returns a {Decoration} object
          */
-        decorateMarker(marker: Marker, decorationParams: Object): Decoration;
+        decorateMarker(marker: DisplayMarker, decorationParams: Object): Decoration;
         /**
-         * Get all the decorations within a screen row range.
-         * @param {number} the {Number} beginning screen row
-         * @param {number} the {Number} end screen row (inclusive)
-         * @returns {Object} Returns an {Object} of decorations in the form
-         `{1: [{id: 10, type: 'line-number', class: 'someclass'}], 2: ...}`
-          where the keys are {Marker} IDs, and the values are an array of decoration
-          params objects attached to the marker.
-         * @returns  Returns an empty object when no decorations are found
+         * Add a decoration to every marker in the given marker layer. Can
+         * be used to decorate a large number of markers without having to create and
+         * manage many individual decorations.
+         * @param {DisplayMarkerLayer} A {DisplayMarkerLayer} or {MarkerLayer} to decorate.
+         * @param  The same parameters that are passed to {TextEditor::decorateMarker}, except the `type` cannot be `overlay` or `gutter`.
+         * @returns {LayerDecoration} Returns a {LayerDecoration}.
          */
-        decorationsForScreenRowRange(startScreenRow: number, endScreenRow: number): Object;
+        decorateMarkerLayer(markerLayer: DisplayMarkerLayer, decorationParams: any): LayerDecoration;
         /**
          * Get all decorations.
          * @param {Object} An {Object} containing key value pairs that the returned decorations' properties must match.
@@ -4902,63 +5799,92 @@ declare module AtomTypes {
          */
         getOverlayDecorations(propertyFilter?: Object): any[];
         /**
-         * Create a marker with the given range in buffer coordinates. This
-         * marker will maintain its logical location as the buffer is changed, so if
-         * you mark a particular word, the marker will remain over that word even if
-         * the word's location in the buffer changes.
+         * Create a marker on the default marker layer with the given range
+         * in buffer coordinates. This marker will maintain its logical location as the
+         * buffer is changed, so if you mark a particular word, the marker will remain
+         * over that word even if the word's location in the buffer changes.
          * @param {Range} A {Range} or range-compatible {Array}
          * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
-         * @returns {Marker} Returns a {Marker}.
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markBufferRange(range: Range, properties: any): Marker;
+        markBufferRange(range: Range, properties: any): DisplayMarker;
         /**
-         * Create a marker with the given range in screen coordinates. This
-         * marker will maintain its logical location as the buffer is changed, so if
-         * you mark a particular word, the marker will remain over that word even if
-         * the word's location in the buffer changes.
+         * Create a marker on the default marker layer with the given range
+         * in screen coordinates. This marker will maintain its logical location as the
+         * buffer is changed, so if you mark a particular word, the marker will remain
+         * over that word even if the word's location in the buffer changes.
          * @param {Range} A {Range} or range-compatible {Array}
          * @param  A hash of key-value pairs to associate with the marker. There are also reserved property names that have marker-specific meaning.
-         * @returns {Marker} Returns a {Marker}.
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markScreenRange(range: Range, properties: any): Marker;
+        markScreenRange(range: Range, properties: any): DisplayMarker;
         /**
-         * Mark the given position in buffer coordinates.
-         * @param {Point} A {Point} or {Array} of `[row, column]`.
-         * @param  See {TextBuffer::markRange}.
-         * @returns {Marker} Returns a {Marker}.
+         * Create a marker on the default marker layer with the given buffer
+         * position and no tail. To group multiple markers together in their own
+         * private layer, see {::addMarkerLayer}.
+         * @param {Point} A {Point} or point-compatible {Array}
+         * @param {Object} An {Object} with the following keys:
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markBufferPosition(position: Point, options?: any): Marker;
+        markBufferPosition(bufferPosition: Point, options?: Object): DisplayMarker;
         /**
-         * Mark the given position in screen coordinates.
-         * @param {Point} A {Point} or {Array} of `[row, column]`.
-         * @param  See {TextBuffer::markRange}.
-         * @returns {Marker} Returns a {Marker}.
+         * Create a marker on the default marker layer with the given screen
+         * position and no tail. To group multiple markers together in their own
+         * private layer, see {::addMarkerLayer}.
+         * @param {Point} A {Point} or point-compatible {Array}
+         * @param {Object} An {Object} with the following keys:
+         * @returns {DisplayMarker} Returns a {DisplayMarker}.
          */
-        markScreenPosition(position: Point, options?: any): Marker;
+        markScreenPosition(screenPosition: Point, options?: Object): DisplayMarker;
         /**
-         * Find all {Marker}s that match the given properties.
+         * Find all {DisplayMarker}s on the default marker layer that
+         * match the given properties.
          * 
          * This method finds markers based on the given properties. Markers can be
          * associated with custom properties that will be compared with basic equality.
          * In addition, there are several special properties that will be compared
          * with the range of the markers rather than their properties.
          * @param {Object} An {Object} containing properties that each returned marker must satisfy. Markers can be associated with custom properties, which are compared with basic equality. In addition, several reserved properties can be used to filter markers based on their current range:
+         * @returns {any[]} Returns an {Array} of {DisplayMarker}s
          */
-        findMarkers(properties: Object): void;
+        findMarkers(properties: Object): any[];
         /**
-         * Get the {Marker} for the given marker id.
+         * Get the {DisplayMarker} on the default layer for the given
+         * marker id.
          * @param {number} {Number} id of the marker 
          */
         getMarker(id: number): void;
         /**
-         * Get all {Marker}s. Consider using {::findMarkers} 
+         * Get all {DisplayMarker}s on the default marker layer. Consider
+         * using {::findMarkers} 
          */
         getMarkers(): void;
         /**
-         * Get the number of markers in this editor's buffer.
+         * Get the number of markers in the default marker layer.
          * @returns {number} Returns a {Number}.
          */
         getMarkerCount(): number;
+        /**
+         * Create a marker layer to group related markers.
+         * @param {Object} An {Object} containing the following keys:
+         * @returns {DisplayMarkerLayer} Returns a {DisplayMarkerLayer}.
+         */
+        addMarkerLayer(options: Object): DisplayMarkerLayer;
+        /**
+         * Get a {DisplayMarkerLayer} by id.
+         * @param  The id of the marker layer to retrieve.
+         * @returns {DisplayMarkerLayer} Returns a {DisplayMarkerLayer} or `` if no layer exists with the
+        given id.
+         */
+        getMarkerLayer(id: any): DisplayMarkerLayer;
+        /**
+         * Get the default {DisplayMarkerLayer}.
+         * 
+         * All marker APIs not tied to an explicit layer interact with this default
+         * layer.
+         * @returns {DisplayMarkerLayer} Returns a {DisplayMarkerLayer}.
+         */
+        getDefaultMarkerLayer(): DisplayMarkerLayer;
         /**
          * Get the position of the most recently added cursor in buffer
          * coordinates.
@@ -4975,9 +5901,15 @@ declare module AtomTypes {
          * 
          * If there are multiple cursors, they will be consolidated to a single cursor.
          * @param {Point} A {Point} or {Array} of `[row, column]`
-         * @param {Object} An {Object} combining options for {::clipScreenPosition} with:
+         * @param {Object} An {Object} containing the following keys:
          */
         setCursorBufferPosition(position: Point, options?: Object): void;
+        /**
+         * Get a {Cursor} at given screen coordinates {Point}
+         * @param {Point} A {Point} or {Array} of `[row, column]`
+         * @returns {Cursor} Returns the first matched {Cursor} or
+         */
+        getCursorAtScreenPosition(position: Point): Cursor;
         /**
          * Get the position of the most recently added cursor in screen
          * coordinates.
@@ -5086,6 +6018,14 @@ declare module AtomTypes {
          */
         moveToNextWordBoundary(): void;
         /**
+         * Move every cursor to the previous subword boundary. 
+         */
+        moveToPreviousSubwordBoundary(): void;
+        /**
+         * Move every cursor to the next subword boundary. 
+         */
+        moveToNextSubwordBoundary(): void;
+        /**
          * Move every cursor to the beginning of the next paragraph. 
          */
         moveToBeginningOfNextParagraph(): void;
@@ -5182,9 +6122,8 @@ declare module AtomTypes {
          * Add a selection for the given range in screen coordinates.
          * @param {Range} A {Range}
          * @param {Object} An options {Object}:
-         * @returns {Selection} Returns the added {Selection}.
          */
-        addSelectionForScreenRange(screenRange: Range, options?: Object): Selection;
+        addSelectionForScreenRange(screenRange: Range, options?: Object): void;
         /**
          * Select from the current cursor position to the given position in
          * buffer coordinates.
@@ -5291,6 +6230,20 @@ declare module AtomTypes {
          */
         selectToEndOfWord(): void;
         /**
+         * For each selection, move its cursor to the preceding subword
+         * boundary while maintaining the selection's tail position.
+         * 
+         * This method may merge selections that end up intersecting. 
+         */
+        selectToPreviousSubwordBoundary(): void;
+        /**
+         * For each selection, move its cursor to the next subword boundary
+         * while maintaining the selection's tail position.
+         * 
+         * This method may merge selections that end up intersecting. 
+         */
+        selectToNextSubwordBoundary(): void;
+        /**
          * For each cursor, select the containing line.
          * 
          * This method merges selections on successive lines. 
@@ -5337,10 +6290,10 @@ declare module AtomTypes {
         selectToBeginningOfPreviousParagraph(): void;
         /**
          * Select the range of the given marker if it is valid.
-         * @param {Marker} A {Marker}
+         * @param {DisplayMarker} A {DisplayMarker}
          * @returns {Range} Returns the selected {Range} or `` if the marker is invalid.
          */
-        selectMarker(marker: Marker): Range;
+        selectMarker(marker: DisplayMarker): Range;
         /**
          * Get the most recently added {Selection}.
          * @returns {Selection} Returns a {Selection}.
@@ -5455,16 +6408,16 @@ declare module AtomTypes {
          */
         getSoftWrapColumn(): void;
         /**
-         * Get the indentation level of the given a buffer row.
-         * @returns {number} Returns how deeply the given row is indented based on the soft tabs and
-        tab length settings of this editor. Note that if soft tabs are enabled and
-        the tab length is 2, a row with 4 leading spaces would have an indentation
-        level of 2.
-        
-        * `bufferRow` A {Number} indicating the buffer row.
+         * Get the indentation level of the given buffer row.
+         * 
+         * Determines how deeply the given row is indented based on the soft tabs and
+         * tab length settings of this editor. Note that if soft tabs are enabled and
+         * the tab length is 2, a row with 4 leading spaces would have an indentation
+         * level of 2.
+         * @param {number} A {Number} indicating the buffer row.
          * @returns {number} Returns a {Number}.
          */
-        indentationForBufferRow(): number;
+        indentationForBufferRow(bufferRow: number): number;
         /**
          * Set the indentation level for the given buffer row.
          * 
@@ -5487,15 +6440,15 @@ declare module AtomTypes {
         outdentSelectedRows(): void;
         /**
          * Get the indentation level of the given line of text.
-         * @returns {string} Returns how deeply the given line is indented based on the soft tabs and
-        tab length settings of this editor. Note that if soft tabs are enabled and
-        the tab length is 2, a row with 4 leading spaces would have an indentation
-        level of 2.
-        
-        * `line` A {String} representing a line of text.
+         * 
+         * Determines how deeply the given line is indented based on the soft tabs and
+         * tab length settings of this editor. Note that if soft tabs are enabled and
+         * the tab length is 2, a row with 4 leading spaces would have an indentation
+         * level of 2.
+         * @param {string} A {String} representing a line of text.
          * @returns {number} Returns a {Number}.
          */
-        indentLevelForLine(): string | number;
+        indentLevelForLine(line: string): number;
         /**
          * Indent rows intersecting selections based on the grammar's suggested
          * indent level. 
@@ -5564,10 +6517,16 @@ declare module AtomTypes {
         pasteText(options?: any): void;
         /**
          * For each selection, if the selection is empty, cut all characters
-         * of the containing line following the cursor. Otherwise cut the selected
+         * of the containing screen line following the cursor. Otherwise cut the selected
          * text. 
          */
         cutToEndOfLine(): void;
+        /**
+         * For each selection, if the selection is empty, cut all characters
+         * of the containing buffer line following the cursor. Otherwise cut the
+         * selected text. 
+         */
+        cutToEndOfBufferLine(): void;
         /**
          * Fold the most recent cursor's row based on its indentation level.
          * 
@@ -5650,6 +6609,22 @@ declare module AtomTypes {
          */
         isFoldedAtScreenRow(screenRow: number): boolean;
         /**
+         * Add a custom {Gutter}.
+         * @param {Object} An {Object} with the following fields:
+         * @returns {Gutter} Returns the newly-created {Gutter}.
+         */
+        addGutter(options: Object): Gutter;
+        /**
+         * Get this editor's gutters.
+         * @returns {any[]} Returns an {Array} of {Gutter}s.
+         */
+        getGutters(): any[];
+        /**
+         * Get the gutter with the given name.
+         * @returns {Gutter} Returns a {Gutter}, or `null` if no gutter exists for the given name.
+         */
+        gutterWithName(): Gutter;
+        /**
          * Scroll the editor to reveal the most recently added cursor if it is
          * off-screen.
          * @param {Object} {Object}
@@ -5663,18 +6638,10 @@ declare module AtomTypes {
         scrollToBufferPosition(bufferPosition: Object, options?: Object): void;
         /**
          * Scrolls the editor to the given screen position.
-         * @param {Object} An object that represents a buffer position. It can be either  an {Object} (`{row, column}`), {Array} (`[row, column]`), or {Point}
+         * @param {Object} An object that represents a screen position. It can be either  an {Object} (`{row, column}`), {Array} (`[row, column]`), or {Point}
          * @param {Object} {Object}
          */
         scrollToScreenPosition(screenPosition: Object, options?: Object): void;
-        /**
-         * Scrolls the editor to the top 
-         */
-        scrollToTop(): void;
-        /**
-         * Scrolls the editor to the bottom 
-         */
-        scrollToBottom(): void;
         /**
          * Retrieves the greyed out placeholder of a mini editor.
          * @returns {string} Returns a {String}.
@@ -5694,7 +6661,7 @@ declare module AtomTypes {
      * An instance of this class is always available as the `atom.themes` global. 
      *
      * file: src/theme-manager.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/theme-manager.coffee#L13
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/theme-manager.coffee#L11
      */
     class ThemeManager { 
         /**
@@ -5704,21 +6671,21 @@ declare module AtomTypes {
          */
         onDidChangeActiveThemes(callback: Function): void;
         /**
-         * Get an array of all the loaded theme names. 
+         * @returns {any[]} Returns an {Array} of {String}s of all the loaded theme names.
          */
-        getLoadedThemeNames(): void;
+        getLoadedThemeNames(): any[];
         /**
-         * Get an array of all the loaded themes. 
+         * @returns {any[]} Returns an {Array} of all the loaded themes.
          */
-        getLoadedThemes(): void;
+        getLoadedThemes(): any[];
         /**
-         * Get an array of all the active theme names. 
+         * @returns {any[]} Returns an {Array} of {String}s all the active theme names.
          */
-        getActiveThemeNames(): void;
+        getActiveThemeNames(): any[];
         /**
-         * Get an array of all the active themes. 
+         * @returns {any[]} Returns an {Array} of all the active themes.
          */
-        getActiveThemes(): void;
+        getActiveThemes(): any[];
         /**
          * Get the enabled theme names from the config.
          * @returns  Returns an array of theme names in the order that they should be activated.
@@ -5727,22 +6694,68 @@ declare module AtomTypes {
     }
 
     /**
-     * Associates tooltips with HTML elements or selectors.
+     * Associates tooltips with HTML elements.
      * 
      * You can get the `TooltipManager` via `atom.tooltips`.
      *
      * file: src/tooltip-manager.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/tooltip-manager.coffee#L47
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/tooltip-manager.coffee#L47
      */
     class TooltipManager { 
         /**
          * Add a tooltip to the given element.
          * @param  An `HTMLElement`
-         * @param  See http://getbootstrap.com/javascript/#tooltips for a full list of options. You can also supply the following additional options:
+         * @param  An object with one or more of the following options:
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to remove the
         tooltip.
          */
         add(target: any, options: any): Disposable;
+        /**
+         * Find the tooltips that have been applied to the given element.
+         * @param  The `HTMLElement` to find tooltips on.
+         * @returns {any[]} Returns an {Array} of `Tooltip` objects that match the `target`.
+         */
+        findTooltips(target: any): any[];
+    }
+
+    /**
+     * View class that extends the jQuery prototype.
+     * 
+     * Extending classes must implement a `@content` method.
+     *
+     * file: src/space-pen.coffee
+     * srcUrl: https://github.com/atom/space-pen/blob/v5.1.2/src/space-pen.coffee#L75
+     */
+    class View extends jQuery { 
+        /**
+         * Add the given subview wired to an outlet with the given name
+         * @param {string} {String} name of the subview
+         * @param  DOM element or jQuery node subview 
+         */
+        static subview(name: string, view: any): void;
+        /**
+         * Add a text node with the given text content
+         * @param {string} {String} text contents of the node 
+         */
+        static text(string: string): void;
+        /**
+         * Add a new tag with the given name
+         * @param {string} {String} name of the tag like 'li', etc
+         * @param  other arguments 
+         */
+        static tag(tagName: string, args...: any): void;
+        /**
+         * Add new child DOM nodes from the given raw HTML string.
+         * @param {string} {String} HTML content 
+         */
+        static raw(string: string): void;
+
+        /**
+         * Preempt events registered with jQuery's `::on`.
+         * @param {string} A event name {String}.
+         * @param {Function} A {Function} to execute when the eventName is triggered. 
+         */
+        preempt(eventName: string, handler: Function): void;
     }
 
     /**
@@ -5756,6 +6769,9 @@ declare module AtomTypes {
      * application logic and is the primary point of API interaction. The view
      * just handles presentation.
      * 
+     * Note: Models can be any object, but must implement a `getTitle()` function
+     * if they are to be displayed in a {Pane}
+     * 
      * View providers inform the workspace how your model objects should be
      * presented in the DOM. A view provider must always return a DOM node, which
      * makes [HTML 5 custom elements](http://www.html5rocks.com/en/tutorials/webcomponents/customelements/)
@@ -5764,23 +6780,40 @@ declare module AtomTypes {
      * You can access the `ViewRegistry` object via `atom.views`.
      *
      * file: src/view-registry.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/view-registry.coffee#L44
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/view-registry.coffee#L49
      */
     class ViewRegistry { 
         /**
          * Add a provider that will be used to construct views in the
          * workspace's view layer based on model objects in its model layer.
-         * @param {Object} {Object} containing the following keys:
+         * @param {Function} Constructor {Function} for your model. If a constructor is given, the `createView` function will only be used for model objects inheriting from that constructor. Otherwise, it will will be called for any object.
+         * @param {Function} Factory {Function} that is passed an instance of your model and must return a subclass of `HTMLElement` or `undefined`. If it returns `undefined`, then the registry will continue to search for other view providers.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to remove the
         added provider.
          */
-        addViewProvider(providerSpec: Object): Disposable;
+        addViewProvider(modelConstructor?: Function, createView: Function): Disposable;
         /**
          * Get the view associated with an object in the workspace.
          * 
          * If you're just *using* the workspace, you shouldn't need to access the view
          * layer, but view layer access may be necessary if you want to perform DOM
          * manipulation that isn't supported via the model API.
+         * 
+         * ## View Resolution Algorithm
+         * 
+         * The view associated with the object is resolved using the following
+         * sequence
+         * 
+         * 1. Is the object an instance of `HTMLElement`? If true, return the object.
+         * 1. Does the object have a property named `element` with a value which is
+         *   an instance of `HTMLElement`? If true, return the property value.
+         * 1. Is the object a jQuery object, indicated by the presence of a `jquery`
+         *   property? If true, return the root DOM element (i.e. `object[0]`).
+         * 1. Has a view provider been registered for the object? If true, use the
+         *   provider to create a view associated with the object, and return the
+         *   view.
+         * 
+         * If no associated view is returned by the sequence an error is thrown.
          * @param  The object for which you want to retrieve a view. This can be a pane item, a pane, or the workspace itself.
          * @returns  Returns a DOM element.
          */
@@ -5792,11 +6825,11 @@ declare module AtomTypes {
      * An instance of this class is available via the `atom.workspace` global.
      * 
      * Interact with this object to open files, be notified of current and future
-     * editors, and manipulate panes. To add panels, you'll need to use the
-     * {WorkspaceView} class for now until we establish APIs at the model layer.
+     * editors, and manipulate panes. To add panels, use {Workspace::addTopPanel}
+     * and friends.
      *
      * file: src/workspace.coffee
-     * srcUrl: https://github.com/atom/atom/blob/v0.193.0/src/workspace.coffee#L31
+     * srcUrl: https://github.com/atom/atom/blob/v1.15.0/src/workspace.coffee#L25
      */
     class Workspace { 
         /**
@@ -5815,10 +6848,28 @@ declare module AtomTypes {
         observePaneItems(callback: Function): Disposable;
         /**
          * Invoke the given callback when the active pane item changes.
+         * 
+         * Because observers are invoked synchronously, it's important not to perform
+         * any expensive operations via this method. Consider
+         * {::onDidStopChangingActivePaneItem} to delay operations until after changes
+         * stop occurring.
          * @param {Function} {Function} to be called when the active pane item changes.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
         onDidChangeActivePaneItem(callback: Function): Disposable;
+        /**
+         * Invoke the given callback when the active pane item stops
+         * changing.
+         * 
+         * Observers are called asynchronously 100ms after the last active pane item
+         * change. Handling changes here rather than in the synchronous
+         * {::onDidChangeActivePaneItem} prevents unneeded work if the user is quickly
+         * changing or closing tabs and ensures critical UI feedback, like changing the
+         * highlighted tab, gets priority over work that can be done asynchronously.
+         * @param {Function} {Function} to be called when the active pane item stopts changing.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onDidStopChangingActivePaneItem(callback: Function): Disposable;
         /**
          * Invoke the given callback with the current active pane item and
          * with all future active pane items in the workspace.
@@ -5840,6 +6891,13 @@ declare module AtomTypes {
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
          */
         onDidAddPane(callback: Function): Disposable;
+        /**
+         * Invoke the given callback before a pane is destroyed in the
+         * workspace.
+         * @param {Function} {Function} to be called before panes are destroyed.
+         * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+         */
+        onWillDestroyPane(callback: Function): Disposable;
         /**
          * Invoke the given callback when a pane is destroyed in the
          * workspace.
@@ -5901,22 +6959,45 @@ declare module AtomTypes {
          * the URI, a new empty {TextEditor} will be created.
          * @param {string} A {String} containing a URI.
          * @param {Object} {Object}
-         * @returns {TextEditor} Returns a promise that resolves to the {TextEditor} for the file URI.
+         * @returns {Promise<any>} Returns a {Promise} that resolves to the {TextEditor} for the file URI.
          */
-        open(uri?: string, options?: Object): TextEditor;
+        open(uri?: string, options?: Object): Promise<any>;
+        /**
+         * @param {Object} An {Object} you want to perform the check against. 
+         * @returns {boolean} Returns a {Boolean} that is `true` if `object` is a `TextEditor`.
+         */
+        isTextEditor(object: Object): boolean;
+        /**
+         * Create a new text editor.
+         * @returns {TextEditor} Returns a {TextEditor}.
+         */
+        buildTextEditor(): TextEditor;
         /**
          * Asynchronously reopens the last-closed item's URI if it hasn't already been
          * reopened.
-         * @returns  Returns a promise that is resolved when the item is opened
+         * @returns {Promise<any>} Returns a {Promise} that is resolved when the item is opened
          */
-        reopenItem(): any;
+        reopenItem(): Promise<any>;
         /**
          * Register an opener for a uri.
          * 
-         * An {TextEditor} will be used if no openers return a value.
+         * When a URI is opened via {Workspace::open}, Atom loops through its registered
+         * opener functions until one returns a value for the given uri.
+         * Openers are expected to return an object that inherits from HTMLElement or
+         * a model which has an associated view in the {ViewRegistry}.
+         * A {TextEditor} will be used if no opener returns a value.
          * @param {Function} A {Function} to be called when a path is being opened.
          * @returns {Disposable} Returns a {Disposable} on which `.dispose()` can be called to remove the
         opener.
+        
+        Note that the opener will be called if and only if the URI is not already open
+        in the current pane. The searchAllPanes flag expands the search from the
+        current pane to all panes. If you wish to open a view of a different type for
+        a file that is already open, consider changing the protocol of the URI. For
+        example, perhaps you wish to preview a rendered version of the file `/foo/bar/baz.quux`
+        that is already open in a text editor view. You could signal this by calling
+        {Workspace::open} on the URI `quux-preview://foo/bar/baz.quux`. Then your opener
+        can check the protocol for quux-preview and only handle those URIs that match.
          */
         addOpener(opener: Function): Disposable;
         /**
@@ -6011,6 +7092,26 @@ declare module AtomTypes {
          */
         addTopPanel(options: Object): Panel;
         /**
+         * Get an {Array} of all the panel items in the header. 
+         */
+        getHeaderPanels(): void;
+        /**
+         * Adds a panel item to the header.
+         * @param {Object} {Object}
+         * @returns {Panel} Returns a {Panel}
+         */
+        addHeaderPanel(options: Object): Panel;
+        /**
+         * Get an {Array} of all the panel items in the footer. 
+         */
+        getFooterPanels(): void;
+        /**
+         * Adds a panel item to the footer.
+         * @param {Object} {Object}
+         * @returns {Panel} Returns a {Panel}
+         */
+        addFooterPanel(options: Object): Panel;
+        /**
          * Get an {Array} of all the modal panel items 
          */
         getModalPanels(): void;
@@ -6028,22 +7129,23 @@ declare module AtomTypes {
          */
         panelForItem(item: any): Panel;
         /**
-         * Performs a search across all the files in the workspace.
+         * Performs a search across all files in the workspace.
          * @param {RegExp} {RegExp} to search with.
-         * @param {Object} {Object} (default: {})
-         * @param {Function} {Function} callback on each file found
-         * @returns  Returns a `Promise`.
+         * @param {Object} {Object}
+         * @param {Function} {Function} callback on each file found.
+         * @returns {Promise<any>} Returns a {Promise} with a `cancel()` method that will cancel all
+        of the underlying searches that were started as part of this scan.
          */
-        scan(regex: RegExp, options?: Object, iterator?: Function): any;
+        scan(regex: RegExp, options?: Object, iterator: Function): Promise<any>;
         /**
          * Performs a replace across all the specified files in the project.
          * @param {RegExp} A {RegExp} to search with.
-         * @param  Text to replace all matches of regex with
-         * @param  List of file path strings to run the replace on.
+         * @param {string} {String} to replace all matches of regex with.
+         * @param {any[]} An {Array} of file path strings to run the replace on.
          * @param {Function} A {Function} callback on each file with replacements:
-         * @returns  Returns a `Promise`.
+         * @returns {Promise<any>} Returns a {Promise}.
          */
-        replace(regex: RegExp, replacementText: any, filePaths: any, iterator: Function): any;
+        replace(regex: RegExp, replacementText: string, filePaths: any[], iterator: Function): Promise<any>;
     }
 
 }

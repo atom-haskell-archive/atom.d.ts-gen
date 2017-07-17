@@ -1,5 +1,7 @@
 # Atom .d.ts generator
 
+forked from https://github.com/vvakame/atom-dts-generator
+
 ## How to generate Atom's api json
 
 ```
