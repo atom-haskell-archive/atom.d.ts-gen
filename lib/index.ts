@@ -81,7 +81,7 @@ class Emitter {
         if (property.summary) {
             let reArray = /\{(.*?)\}/.exec(property.summary);
             if (reArray && 2 <= reArray.length) {
-                this.def += reArray[1];
+                this.def += this.toTSType(reArray[1]);
             } else {
                 this.def += "any";
             }

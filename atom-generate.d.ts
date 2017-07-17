@@ -3838,11 +3838,11 @@ declare module AtomTypes {
         /**
          * A zero-indexed {Number} representing the row of the {Point}. 
          */
-        row: Number;
+        row: number;
         /**
          * A zero-indexed {Number} representing the column of the {Point}. 
          */
-        column: Number;
+        column: number;
 
         /**
          * Convert any point-compatible object to a {Point}.
