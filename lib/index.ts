@@ -43,7 +43,7 @@ class Emitter {
             this.def += ` *\n`;
         }
         this.def += ` * file: ${clazz.filename}\n`;
-        this.def += ` * srcUrl: ${clazz.srcUrl}\n`;
+        // this.def += ` * srcUrl: ${clazz.srcUrl}\n`;
         this.def += ` */\n`;
         this.def += `class ${clazz.name} `;
         if (clazz.superClass && clazz.superClass !== "Model") {
