@@ -79,7 +79,7 @@ class Emitter {
         this.def += ` */\n`;
         this.def += `\t${modifier} ${property.name}: `;
         if (property.summary) {
-            let reArray = /\{(.*)\}/.exec(property.summary);
+            let reArray = /\{(.*?)\}/.exec(property.summary);
             if (reArray && 2 <= reArray.length) {
                 this.def += reArray[1];
             } else {
