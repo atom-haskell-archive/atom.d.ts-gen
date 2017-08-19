@@ -2,7 +2,6 @@
 
 .tscache/
 node_modules/
-tsconfig.json
 
 typings/
 lib/**/*.js

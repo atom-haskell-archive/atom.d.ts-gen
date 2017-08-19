@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "isolatedModules": false,
+        "jsx": "react",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": false,
+        "noImplicitAny": true,
+        "noImplicitUseStrict": false,
+        "removeComments": true,
+        "noLib": false,
+        "jsxFactory": "etch.dom",
+        "preserveConstEnums": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "inlineSources": true,
+        "inlineSourceMap": true,
+        "strictNullChecks": true,
+        "allowJs": false,
+        "lib": ["es6"],
+        "strict": true
+    },
+    "include": [
+        "lib/**.ts",
+        "fixture/**.d.ts",
+        "node_modules/typescript-formatter/**.d.ts"
+    ],
+    "compileOnSave": true
+}
