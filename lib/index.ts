@@ -189,4 +189,4 @@ class Emitter {
   }
 }
 
-new Emitter(meta).emit().then(def => console.log(def))
+new Emitter(meta).emit().then(def => console.log(def)).catch(e => console.error(e))
