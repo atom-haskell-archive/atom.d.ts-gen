@@ -1,4 +1,4 @@
-# Atom .d.ts generator
+# Atom .d.ts generator ![](https://david-dm.org/atom-haskell/atom-dts-generator.svg)
 
 forked from https://github.com/vvakame/atom-dts-generator
 
