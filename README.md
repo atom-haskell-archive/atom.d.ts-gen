@@ -1,4 +1,6 @@
-# Atom .d.ts generator ![](https://david-dm.org/atom-haskell/atom-dts-generator.svg)
+# DEPRECATED. Use `@types/atom`
+
+# Atom .d.ts generator
 
 forked from https://github.com/vvakame/atom-dts-generator
 
